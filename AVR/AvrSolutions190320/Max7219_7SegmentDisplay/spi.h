@@ -9,7 +9,7 @@
 #ifndef __SPI_H__
 #define __SPI_H__
 
-
+#include <avr/io.h>
 class Spi
 {
     int m_sck;
@@ -17,12 +17,12 @@ class Spi
     int m_miso;
     int m_ss;
     public:
-    Spi(unsigned char sck, unsigned char mosi, unsigned char ss);
+    Spi(uint8_t sck, uint8_t mosi, uint8_t ss);
     void enableSpi();
     void setAsMaster();
     void prescaleOsc8();
     
-    void send(unsigned char data);
+    void send(uint8_t data);
     void setCSLow();
     void setCSHigh();
 };

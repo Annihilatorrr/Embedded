@@ -10,7 +10,8 @@
 
 #include <avr/io.h>
 
-Spi::Spi(unsigned char sck = PB5, unsigned char mosi = PB3, unsigned char ss = PB2):m_sck(sck), m_mosi(mosi), m_ss(m_ss)
+Spi::Spi(uint8_t sck = PB5, uint8_t mosi = PB3, uint8_t ss = PB2):
+m_sck(sck), m_mosi(mosi), m_ss(m_ss)
 {
     DDRB |= (1 << sck); // set SCK as output
     DDRB |= (1 << mosi); // set MOSI as output
@@ -30,7 +31,7 @@ void Spi::setCSHigh()
 {
     PORTB |= (1 << PB2); // set CS high
 }
-void Spi::send(unsigned char data)
+void Spi::send(uint8_t data)
 {
     SPDR = data;
     while (!(SPSR & (1 << SPIF)));
