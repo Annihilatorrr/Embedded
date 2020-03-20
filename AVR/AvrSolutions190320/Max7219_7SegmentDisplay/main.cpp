@@ -83,72 +83,74 @@ void demoNonDecodeMode()
         s7display.displayChar('-', i);
     }
     _delay_ms(1000);
-    for (int i = 1; i <= 8; ++i)
+    for (int cycle = 0; cycle < 10; ++ cycle )
     {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::A, i);
-    }
-    _delay_ms(50);
+       
+        for (int i = 1; i <= 8; ++i)
+        {
+            s7display.displaySegment(SevenSegmentDisplay::Segment::A, i);
+        }
+        _delay_ms(50);
 
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::A, i);
-    }
-    _delay_ms(50);
+        for (int i = 1; i <= 8; ++i)
+        {
+            s7display.displaySegment(SevenSegmentDisplay::Segment::B, i);
+        }
+        _delay_ms(50);
 
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::A, i);
-    }
-    _delay_ms(50);
+        for (int i = 1; i <= 8; ++i)
+        {
+            s7display.displaySegment(SevenSegmentDisplay::Segment::C, i);
+        }
+        _delay_ms(50);
 
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::B, i);
-    }
-    _delay_ms(50);
+        for (int i = 1; i <= 8; ++i)
+        {
+            s7display.displaySegment(SevenSegmentDisplay::Segment::D, i);
+        }
+        _delay_ms(50);
 
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::C, i);
-    }
-    _delay_ms(50);
+        for (int i = 1; i <= 8; ++i)
+        {
+            s7display.displaySegment(SevenSegmentDisplay::Segment::E, i);
+        }
+        _delay_ms(50);
 
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::D, i);
+        for (int i = 1; i <= 8; ++i)
+        {
+            s7display.displaySegment(SevenSegmentDisplay::Segment::F, i);
+        }
+        _delay_ms(50);
     }
-    _delay_ms(50);
-
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::E, i);
-    }
-    _delay_ms(50);
-
-    for (int i = 1; i <= 8; ++i)
-    {
-        s7display.displaySegment(SevenSegmentDisplay::Segment::F, i);
-    }
-    _delay_ms(50);
-    //s7display.displayChar('-', 1);
-    //s7display.displayChar('-', 2);
-    //s7display.displayChar('-', 4);
-    //s7display.displayChar('-', 4);
-    //s7display.displayChar('-', 5);
-    //s7display.displayChar('-', 6);
-    //s7display.displayChar('-', 7);
-    //s7display.displayChar('-', 8);
-    _delay_ms(1000);
     while(true)
     {
-        //s7display.displayChar('x', 4);
-        //_delay_ms(1000);
-        //s7display.displayChar('x', 3);
-        //_delay_ms(1000);
-        //s7display.displayChar('x', 2);
-        //_delay_ms(1000);
-        //s7display.displayChar('x', 1);
-        //_delay_ms(1000);
+        s7display.displayChar(' ', 6);
+        s7display.displayChar(' ', 7);
+        s7display.displayChar(' ', 8);
+        s7display.displayChar('H', 5);
+        _delay_ms(100);
+        s7display.displayChar('E', 4);
+        _delay_ms(100);
+        s7display.displayChar('L', 3);
+        _delay_ms(100);
+        s7display.displayChar('L', 2);
+        _delay_ms(100);        
+        s7display.displayChar('O', 1);
+        _delay_ms(2000);
+
+        s7display.displaySegments(0b00011110, 6);
+        s7display.displayChar(' ', 7);
+        s7display.displayChar(' ', 8);
+        s7display.displaySegments(0b00111100, 5);
+        _delay_ms(100);
+        s7display.displayChar('O', 4);
+        _delay_ms(100);
+        s7display.displayChar('r', 3);
+        _delay_ms(100);
+        s7display.displayChar('L', 2);
+        _delay_ms(100);
+        s7display.displayChar('d', 1);
+        _delay_ms(2000);
     }
     
 }

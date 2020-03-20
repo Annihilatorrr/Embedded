@@ -135,9 +135,7 @@ void SevenSegmentDisplay::DisplayInt64Number(long number, bool divideTriad)
     {
         uint8_t thisDigit = digits[7-i];
         DisplaySendCommand(i + 1, thisDigit);
-
     }
-
 }
 
 void SevenSegmentDisplay::DisplayClear()
@@ -174,4 +172,9 @@ void SevenSegmentDisplay::displayChar(uint8_t c, uint8_t digitIndex)
 void SevenSegmentDisplay::displaySegment(Segment segmentIndex, uint8_t digitIndex)
 {
     DisplaySendCommand(digitIndex, (uint8_t)segmentIndex);
+}
+
+void SevenSegmentDisplay::displaySegments(uint8_t segmentIndex, uint8_t digitIndex)
+{
+    DisplaySendCommand(digitIndex, segmentIndex);
 }

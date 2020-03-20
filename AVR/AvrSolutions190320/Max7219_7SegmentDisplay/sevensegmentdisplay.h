@@ -49,6 +49,7 @@ class SevenSegmentDisplay
     void DisplayInt64Number(long number, bool divideTriad = false);
     void displayChar(uint8_t c, uint8_t digitIndex);
     void displaySegment(Segment segmentIndex, uint8_t digitIndex);
+    void displaySegments(uint8_t segmentIndex, uint8_t digitIndex);
     void DisplayClear();
 
     void turnOnDigit(uint8_t digitIndex);
