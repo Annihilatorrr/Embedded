@@ -14,8 +14,8 @@ void sendcharlcd(unsigned char c);
 //#define e0   I2C_SendByteByADDR(portlcd&=~0x04,0b01001110)  // установка линии E в 0
 //#define rs1    I2C_SendByteByADDR(portlcd|=0x01,0b01001110) // установка линии RS в 1
 //#define rs0   I2C_SendByteByADDR(portlcd&=~0x01,0b01001110)  // установка линии RS в 0
-#define setled()    I2C_SendByteByADDR(portlcd|=0x08,0b01001110) // включение подсветки
-#define setwrite()   I2C_SendByteByADDR(portlcd&=~0x02,0b01001110)  // установка записи в память дисплея
+//#define setled()    I2C_SendByteByADDR(portlcd|=0x08,0b01001110) // включение подсветки
+//#define setwrite()   I2C_SendByteByADDR(portlcd&=~0x02,0b01001110)  // установка записи в память дисплея
 
 //void setE1();
 //void setE0();
