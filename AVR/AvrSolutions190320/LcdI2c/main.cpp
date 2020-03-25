@@ -1,32 +1,19 @@
-/*
- * LcdI2c.cpp
- *
- * Created: 3/25/2020 9:55:34 AM
- * Author : VertexLT
- */ 
-
-#define F_CPU 8000000UL
-#include <avr/io.h>
-#include "lcddisplay.h"
-
+#include "main.h"
+//----------------------------------------
 int main(void)
 {
-    LcdDisplay lcd;
-    I2C_Init();
-    LCD_ini();
-    
+    I2C_Init();//инициализируем TWI
+    LCD_ini();  //инициализируем дисплей
     clearlcd();//очистим дисплей
     setpos(0,0);
-    str_lcd("a");
-    //lcd.setpos(2,1);
-    //lcd.str_lcd("String 2");
-    //lcd.setpos(2,2);
-    //lcd.str_lcd("String 3");
-    //lcd.setpos(6,3);
-    //lcd.str_lcd("String 4");
-    
+    str_lcd("Hello World!");
+    setpos(2,1);
+    str_lcd("String 2");
+    setpos(2,2);
+    str_lcd("String 3");
+    setpos(6,3);
+    str_lcd("String 4");
     while(1)
     {
     }
 }
-

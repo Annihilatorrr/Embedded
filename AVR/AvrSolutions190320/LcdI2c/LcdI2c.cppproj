@@ -165,19 +165,19 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="I2CLCD80.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lcdtwi.c">
+    <Compile Include="lcdtwi.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="lcdtwi.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="main.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="twi.c">
+    <Compile Include="twi.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="twi.h">
