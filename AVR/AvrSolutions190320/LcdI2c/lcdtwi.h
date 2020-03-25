@@ -7,12 +7,19 @@ class LcdDisplay
 {
     
     I2cTwix m_i2cTwi;
+    unsigned char m_portLcd = 0; //ячейка для хранения данных порта микросхемы расширения
+    unsigned char m_pcfrAddress;
     
     public:
-    
-    unsigned char portlcd = 0; //ячейка для хранения данных порта микросхемы расширения
-//----------------------------------------
-    void init(void);
+
+    enum class Address
+    {
+        PCF8574 = 0b01001110,
+        PCF8574A = 0b01111110
+        
+    };
+    //----------------------------------------
+    void initPcfr(Address pcfrAddress);
     void setpos(unsigned char x, unsigned y);
     void str_lcd (char str1[]);
     void clearlcd(void);

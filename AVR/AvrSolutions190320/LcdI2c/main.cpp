@@ -5,11 +5,10 @@
 int main(void)
 {
     LcdDisplay display;
-    //I2C_Init();//инициализируем TWI
-    display.init();  //инициализируем дисплей
-    display.clearlcd();//очистим дисплей
+    display.initPcfr(LcdDisplay::Address::PCF8574);
+    display.clearlcd();
     display.setpos(0,0);
-    display.str_lcd("Hello World!!!");
+    display.str_lcd("Hello World");
     display.setpos(2,1);
     display.str_lcd("String 0");
     display.setpos(2,2);

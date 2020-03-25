@@ -1,5 +1,4 @@
-﻿
-#define F_CPU 8000000UL
+﻿#define F_CPU 8000000UL
 #include <util/delay.h>
 #include "lcdtwi.h"
 //----------------------------------------
@@ -10,39 +9,39 @@
 //c<<=4;
 //e1; //включаем линию Е
 //_delay_us(50);
-//I2C_SendByteByADDR(portlcd|c,0b01001110);
+//I2C_SendByteByADDR(portlcd|c,m_pcfrAddress);
 //e0; //выключаем линию Е
 //_delay_us(50);
 //}
 
 void LcdDisplay::setLed()
 {
-    m_i2cTwi.sendByteByADDR(portlcd|=0x08,0b01001110);
+    m_i2cTwi.sendByteByADDR(m_portLcd|=0x08,m_pcfrAddress);
 }
 
 void LcdDisplay::setWrite()
 {
-    m_i2cTwi.sendByteByADDR(portlcd&=~0x02,0b01001110);
+    m_i2cTwi.sendByteByADDR(m_portLcd&=~0x02,m_pcfrAddress);
 }
 
 void LcdDisplay::setRs0()
 {
-    m_i2cTwi.sendByteByADDR(portlcd&=~0x01,0b01001110);
+    m_i2cTwi.sendByteByADDR(m_portLcd&=~0x01,m_pcfrAddress);
 }
 
 void LcdDisplay::setRs1()
 {
-    m_i2cTwi.sendByteByADDR(portlcd|=0x01,0b01001110);
+    m_i2cTwi.sendByteByADDR(m_portLcd|=0x01,m_pcfrAddress);
 }
 
 void LcdDisplay::setE1()
 {
-    m_i2cTwi.sendByteByADDR(portlcd|=0x04,0b01001110);
+    m_i2cTwi.sendByteByADDR(m_portLcd|=0x04,m_pcfrAddress);
 }
 
 void LcdDisplay::setE0()
 {
-    m_i2cTwi.sendByteByADDR(portlcd&=~0x04,0b01001110);
+    m_i2cTwi.sendByteByADDR(m_portLcd&=~0x04,m_pcfrAddress);
 }
 
 void LcdDisplay::sendhalfbyte(unsigned char c)
@@ -51,9 +50,9 @@ void LcdDisplay::sendhalfbyte(unsigned char c)
     _delay_us(50);
     setE1();
     _delay_us(50);
-    portlcd&=0b00001111;
-    //I2C_SendByteByADDR(portlcd|=c,0b01111110);
-    m_i2cTwi.sendByteByADDR(portlcd|=c,0b01001110);
+    m_portLcd&=0b00001111;
+    //I2C_SendByteByADDR(m_portLcd|=c,0b01111110);
+    m_i2cTwi.sendByteByADDR(m_portLcd|=c,m_pcfrAddress);
     _delay_us(50);
     setE0();
 }
@@ -92,8 +91,9 @@ void LcdDisplay::setpos(unsigned char x, unsigned y)
     }
 }
 //----------------------------------------
-void LcdDisplay::init(void)
+void LcdDisplay::initPcfr(Address pcfrAddress)
 {
+    m_pcfrAddress = (unsigned char)pcfrAddress;
     m_i2cTwi.init();
     _delay_ms(15); //Ждем 15 мс (стр 45)
     sendhalfbyte(0b00000011);
