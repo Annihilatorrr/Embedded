@@ -1,127 +1,137 @@
-﻿#include "lcdtwi.h"
+﻿
+#define F_CPU 8000000UL
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "lcdtwi.h"
 //----------------------------------------
-unsigned char portlcd = 0; //ячейка для хранения данных порта микросхемы расширения
+
 //----------------------------------------
 //void sendhalfbyte(unsigned char c)
 //{
-	//c<<=4;
-	//e1; //включаем линию Е
-	//_delay_us(50);
-	//I2C_SendByteByADDR(portlcd|c,0b01001110);
-	//e0; //выключаем линию Е
-	//_delay_us(50);
+//c<<=4;
+//e1; //включаем линию Е
+//_delay_us(50);
+//I2C_SendByteByADDR(portlcd|c,0b01001110);
+//e0; //выключаем линию Е
+//_delay_us(50);
 //}
 
-void setled() 
+void LcdDisplay::setLed()
 {
-    I2C_SendByteByADDR(portlcd|=0x08,0b01001110);
-}    
-
-void setwrite()
-{
-    I2C_SendByteByADDR(portlcd&=~0x02,0b01001110);
+    m_i2cTwi.sendByteByADDR(portlcd|=0x08,0b01001110);
 }
 
-void setRs0()
+void LcdDisplay::setWrite()
 {
-    I2C_SendByteByADDR(portlcd&=~0x01,0b01001110);
+    m_i2cTwi.sendByteByADDR(portlcd&=~0x02,0b01001110);
 }
 
-void setRs1()
+void LcdDisplay::setRs0()
 {
-    I2C_SendByteByADDR(portlcd|=0x01,0b01001110);
+    m_i2cTwi.sendByteByADDR(portlcd&=~0x01,0b01001110);
 }
 
-void setE1()
+void LcdDisplay::setRs1()
 {
-    I2C_SendByteByADDR(portlcd|=0x04,0b01001110);
+    m_i2cTwi.sendByteByADDR(portlcd|=0x01,0b01001110);
 }
 
-void setE0()
+void LcdDisplay::setE1()
 {
-    I2C_SendByteByADDR(portlcd&=~0x04,0b01001110);
+    m_i2cTwi.sendByteByADDR(portlcd|=0x04,0b01001110);
 }
 
-void sendhalfbyte(unsigned char c)
+void LcdDisplay::setE0()
+{
+    m_i2cTwi.sendByteByADDR(portlcd&=~0x04,0b01001110);
+}
+
+void LcdDisplay::sendhalfbyte(unsigned char c)
 {
     c<<=4;
     _delay_us(50);
-     setE1();
+    setE1();
     _delay_us(50);
     portlcd&=0b00001111;
-  //I2C_SendByteByADDR(portlcd|=c,0b01111110);
-    I2C_SendByteByADDR(portlcd|=c,0b01001110);
+    //I2C_SendByteByADDR(portlcd|=c,0b01111110);
+    m_i2cTwi.sendByteByADDR(portlcd|=c,0b01001110);
     _delay_us(50);
     setE0();
 }
 
 //----------------------------------------
-void sendbyte(unsigned char c, unsigned char mode)
+void LcdDisplay::sendbyte(unsigned char c, unsigned char mode)
 {
-	if (mode==0) setRs0();
-	else         setRs1();
-	unsigned char hc=0;
-	hc=c>>4;
-	sendhalfbyte(hc); sendhalfbyte(c);
+    if (mode==0) setRs0();
+    else         setRs1();
+    unsigned char hc=0;
+    hc=c>>4;
+    sendhalfbyte(hc); sendhalfbyte(c);
 }
 //----------------------------------------
-void sendcharlcd(unsigned char c)
+void LcdDisplay::sendcharlcd(unsigned char c)
 {
-	sendbyte(c,1);
+    sendbyte(c,1);
 }
 //----------------------------------------
-void setpos(unsigned char x, unsigned y)
+void LcdDisplay::setpos(unsigned char x, unsigned y)
 {
-	switch(y)
-	{
-		case 0:
-			sendbyte(x|0x80,0);
-			break;
-		case 1:
-			sendbyte((0x40+x)|0x80,0);
-			break;
-		case 2:
-			sendbyte((0x14+x)|0x80,0);
-			break;
-		case 3:
-			sendbyte((0x54+x)|0x80,0);
-			break;
-	}
+    switch(y)
+    {
+        case 0:
+        sendbyte(x|0x80,0);
+        break;
+        case 1:
+        sendbyte((0x40+x)|0x80,0);
+        break;
+        case 2:
+        sendbyte((0x14+x)|0x80,0);
+        break;
+        case 3:
+        sendbyte((0x54+x)|0x80,0);
+        break;
+    }
 }
 //----------------------------------------
-void LCD_ini(void)
+void LcdDisplay::init(void)
 {
-	_delay_ms(15); //Ждем 15 мс (стр 45)
-	sendhalfbyte(0b00000011);
-	_delay_ms(4);
-	sendhalfbyte(0b00000011);
-	_delay_us(100);
-	sendhalfbyte(0b00000011);
-	_delay_ms(1);
-	sendhalfbyte(0b00000010);
-	_delay_ms(1);
-	sendbyte(0b00101000, 0); //4бит-режим (DL=0) и 2 линии (N=1)
-	_delay_ms(1);
-	sendbyte(0b00001100, 0); //включаем изображение на дисплее (D=1), курсоры никакие не включаем (C=0, B=0)
-	_delay_ms(1);
-	sendbyte(0b00000110, 0); //курсор (хоть он у нас и невидимый) будет двигаться влево
-	_delay_ms(1);
-	setled();//подсветка
-	setwrite();//запись
+    m_i2cTwi.init();
+    _delay_ms(15); //Ждем 15 мс (стр 45)
+    sendhalfbyte(0b00000011);
+    _delay_ms(4);
+    sendhalfbyte(0b00000011);
+    _delay_us(100);
+    sendhalfbyte(0b00000011);
+    _delay_ms(1);
+    sendhalfbyte(0b00000010);
+    _delay_ms(1);
+    sendbyte(0b00101000, 0); //4бит-режим (DL=0) и 2 линии (N=1)
+    _delay_ms(1);
+    sendbyte(0b00001100, 0); //включаем изображение на дисплее (D=1), курсоры никакие не включаем (C=0, B=0)
+    _delay_ms(1);
+    sendbyte(0b00000110, 0); //курсор (хоть он у нас и невидимый) будет двигаться влево
+    _delay_ms(1);
+    setLed();//подсветка
+    setWrite();//запись
 }
 //----------------------------------------
-void clearlcd(void)
+void LcdDisplay::clearlcd(void)
 {
-	sendbyte(0b00000001, 0);
-	_delay_us(1500);
+    sendbyte(0b00000001, 0);
+    _delay_us(1500);
 }
 
 
 //----------------------------------------
-void str_lcd (char str1[])
+void LcdDisplay::str_lcd (char str1[])
 {
-	wchar_t n;
-	for(n=0;str1[n]!='\0';n++)
-	sendcharlcd(str1[n]);
+    wchar_t n;
+    for(n=0;str1[n]!='\0';n++)
+    sendcharlcd(str1[n]);
 }
 //----------------------------------------
