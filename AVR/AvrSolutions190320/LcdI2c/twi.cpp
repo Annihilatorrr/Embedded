@@ -5,13 +5,13 @@
 
 void I2cTwix::init (void)
 {
-    TWBR=0x20;//скорость передачи (при 8 мгц получается 100 кгц, что и необходимо для общения с ds1307)
+    TWBR=0x20; //TWI Bit Rate Register (for 8 MHZ if CPU is 100 KHZ for ds1307)
 }
 
 void I2cTwix::startCondition(void)
 {
     TWCR = (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
-    while (!(TWCR & (1<<TWINT)));//подождем пока установится TWIN
+    while (!(TWCR & (1<<TWINT)));// wait until TWIN is set
 }
 
 void I2cTwix::stopCondition(void)
