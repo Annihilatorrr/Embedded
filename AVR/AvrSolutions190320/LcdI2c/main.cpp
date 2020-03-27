@@ -6,23 +6,37 @@
 #include <avr/interrupt.h>
 
 int i = 0;
-void timer_ini(void)
+// fires at frequence of 8000000/(15625*1024)=0.5Hz
+void timer1_ini(void)
 {
-    TIMSK1 |= (1<<OCIE1A); //устанавливаем бит разрешения прерывания 1ого счетчика по совпадению с OCR1A(H и L)
-
-    //OCR1A = 0b0111101000010010; //записываем в регистр число для сравнения
-    OCR1A = 0b0111101000010010; //записываем в регистр число для сравнения
-    TCCR1B |= (1<<CS11)|(1<<CS10);//установим делител
+     TCCR1A = 0;// set entire TCCR1A register to 0
+     TCCR1B = 0;// same for TCCR1B
+     TCNT1  = 0;//initialize counter value to 0
+     OCR1A = 15625<<1;
+     
+     // turn on CTC mode
+     TCCR1B |= (1 << WGM12);
+     // Set CS12 and CS10 bits for 1024 prescaler
+     TCCR1B |= (1 << CS12);// | (1 << CS10);
+     // enable timer compare interrupt
+     
+     // Timer/Counter1 CompareA Match interrupt is enabled.
+     // The corresponding interrupt (at vector $00C) is executed if a CompareA match in Timer/Counter1 occurs, i.e. when the OCF1A bit is set in the Timer/Counter Interrupt Flag Register - TIFR.
+     TIMSK1 |= (1 << OCIE1A);
+   
+    
 }
 
 ISR (TIMER1_COMPA_vect)
 {
+    PORTB ^= (1 << PORTB4);
     PORTB ^= (1 << PORTB5);
 }
 //----------------------------------------
 int main(void)
 {
-    timer_ini();
+    DDRB = 0xFF;
+    timer1_ini();
     sei();
     LcdDisplay display;
     display.initPcfr(LcdDisplay::Address::PCF8574);
