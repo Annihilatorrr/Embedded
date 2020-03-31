@@ -4,3 +4,7 @@ AVR/AvrSolutions190320/.vs/
 AVR/AvrSolutions190320/I2C_lcd_3/Release/
 AVR/AvrSolutions190320/LcdI2c/Release/
 AVR/AvrSolutions190320/LcdI2c/Debug/
+STM/HelloStm32/Debug/
+STM/.metadata/
+STM/HelloStm32/Drivers/
+STM/HelloStm32/Release/
