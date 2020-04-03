@@ -8,3 +8,5 @@ STM/HelloStm32/Debug/
 STM/.metadata/
 STM/HelloStm32/Drivers/
 STM/HelloStm32/Release/
+STM/BlinkNoHal/Debug/
+STM/BlinkNoHal/Drivers/
