@@ -20,7 +20,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include <stm32f4xx.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -42,6 +41,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+RTC_HandleTypeDef hrtc;
 
 /* USER CODE BEGIN PV */
 
@@ -50,6 +50,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -57,30 +58,36 @@ static void MX_GPIO_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-/* USER CODE END 0 */
-
-/**
- * @brief  The application entry point.
- * @retval int
- */
-
 #define LED_PORT GPIOA
-#define LED_GREEN (1 << 5) /* port D, pin 12 */
+#define LED_GREEN (1 << 5) /* port A, pin 5 */
 
+static inline void setup_leds(void)
+{
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;   /* RCC peripheral clock enabling for port A */
 
-static inline void setup_leds(void){
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;    // разрешаем тактирование порта A (диоды)
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;   // и порта A (кнопка)
-
-	GPIOA->MODER &= ~GPIO_MODER_MODER0;  // укажем что пин кнопки - вход
-	LED_PORT->MODER |= GPIO_MODER_MODER5_0;    /// на диоды - выход
+	GPIOA->MODER &= ~GPIO_MODER_MODER0; 	 /* reset a PORTA for input*/
+	LED_PORT->MODER |= GPIO_MODER_MODER5_0;  /* Set up port A pin 5 as output*/
 }
 
 static inline void switch_leds_off(void){
 	LED_PORT->ODR = 0;
 }
 
+void delayMs(int delay)
+{
+	int j = 0;
+	for (int i=0 ; i < delay ; i++)
+	{
+		j++;
+	}
+}
 
+/* USER CODE END 0 */
+
+/**
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 	/* USER CODE BEGIN 1 */
@@ -105,18 +112,23 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
+	MX_RTC_Init();
 	/* USER CODE BEGIN 2 */
 
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	setup_leds();   // инициализация
+	setup_leds();
 	while (1)
 	{
-		LED_PORT->ODR = LED_GREEN;  // включаем диоды
-		switch_leds_off();
+		/* USER CODE END WHILE */
+
 		/* USER CODE BEGIN 3 */
+		LED_PORT->ODR = LED_GREEN;
+		delayMs(500000);
+		switch_leds_off();
+		delayMs(500000);
 	}
 	/* USER CODE END 3 */
 }
@@ -129,6 +141,7 @@ void SystemClock_Config(void)
 {
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
 	/** Configure the main internal regulator output voltage
 	 */
@@ -136,9 +149,10 @@ void SystemClock_Config(void)
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 	/** Initializes the CPU, AHB and APB busses clocks
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+	RCC_OscInitStruct.LSIState = RCC_LSI_ON;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	{
@@ -157,6 +171,46 @@ void SystemClock_Config(void)
 	{
 		Error_Handler();
 	}
+	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+	PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+	{
+		Error_Handler();
+	}
+}
+
+/**
+ * @brief RTC Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_RTC_Init(void)
+{
+
+	/* USER CODE BEGIN RTC_Init 0 */
+
+	/* USER CODE END RTC_Init 0 */
+
+	/* USER CODE BEGIN RTC_Init 1 */
+
+	/* USER CODE END RTC_Init 1 */
+	/** Initialize RTC Only
+	 */
+	hrtc.Instance = RTC;
+	hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+	hrtc.Init.AsynchPrediv = 127;
+	hrtc.Init.SynchPrediv = 255;
+	hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+	hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+	if (HAL_RTC_Init(&hrtc) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN RTC_Init 2 */
+
+	/* USER CODE END RTC_Init 2 */
+
 }
 
 /**
