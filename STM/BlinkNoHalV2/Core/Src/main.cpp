@@ -97,14 +97,14 @@ int main(void)
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	Application app;
+	app.SPI1_Init();
 	while (1)
 	{
 		/* USER CODE END WHILE */
 		int delay = 20000;
 		RCC->AHB1ENR |= 4;
 		RCC->AHB1ENR |= 1;
-		while (1)
-		{
+
 			if (!(GPIOC->IDR & 0x2000))
 			{
 				app.runPA5BlinkingV2(delay);
@@ -118,7 +118,7 @@ int main(void)
 	  			app.runPA5BlinkingV2(200000);
 	  			app.runPA5BlinkingV2(2000000);*/
 			/* USER CODE BEGIN 3 */
-		}
+
 		/* USER CODE BEGIN 3 */
 	}
 	/* USER CODE END 3 */
