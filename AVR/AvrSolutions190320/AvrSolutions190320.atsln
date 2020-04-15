@@ -13,6 +13,8 @@ Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "I2C_lcd_3", "I2C_lcd_3\I2C_
 EndProject
 Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "LcdI2c", "LcdI2c\LcdI2c.cppproj", "{FC927706-D585-4D54-A13A-7AEF235C138D}"
 EndProject
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "AvrCucarachaLib", "AvrCucarachaLib\AvrCucarachaLib.cppproj", "{2C63A57D-6F27-445E-AFA3-2BE21A3BBD45}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AVR = Debug|AVR
@@ -39,6 +41,10 @@ Global
 		{FC927706-D585-4D54-A13A-7AEF235C138D}.Debug|AVR.Build.0 = Debug|AVR
 		{FC927706-D585-4D54-A13A-7AEF235C138D}.Release|AVR.ActiveCfg = Release|AVR
 		{FC927706-D585-4D54-A13A-7AEF235C138D}.Release|AVR.Build.0 = Release|AVR
+		{2C63A57D-6F27-445E-AFA3-2BE21A3BBD45}.Debug|AVR.ActiveCfg = Debug|AVR
+		{2C63A57D-6F27-445E-AFA3-2BE21A3BBD45}.Debug|AVR.Build.0 = Debug|AVR
+		{2C63A57D-6F27-445E-AFA3-2BE21A3BBD45}.Release|AVR.ActiveCfg = Release|AVR
+		{2C63A57D-6F27-445E-AFA3-2BE21A3BBD45}.Release|AVR.Build.0 = Release|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

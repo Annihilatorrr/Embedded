@@ -6,10 +6,8 @@ AVR/AvrSolutions190320/LcdI2c/Release/
 AVR/AvrSolutions190320/LcdI2c/Debug/
 STM/HelloStm32/Debug/
 STM/.metadata/
-STM/HelloStm32/Drivers/
 STM/HelloStm32/Release/
 STM/BlinkNoHal/Debug/
-STM/BlinkNoHal/Drivers/
 STM/BluePillBlinkCmsisProject/Debug/
 STM/BluePillBlinkCmsisProject/Release/
 STM/BlinkNoHalV2/Debug/
