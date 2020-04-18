@@ -3,16 +3,19 @@
 
 class I2cTwix
 {
+    void startCondition(void); // send start
+    void stopCondition(void); // send stop
+    void sendByte(unsigned char c); // send byte to bus
+    void waitTwi();
     public:
     
     I2cTwix(){}
-    void init (void); //инициализация i2c
-    void startCondition(void); //Отправим условие START
-    void stopCondition(void); //Отправим условие STOP
-    void sendByte(unsigned char c); //передача байта в шину
-    void sendByteByADDR(unsigned char c,unsigned char addr); //передача байта в шину на устройство по адресу
-    unsigned char readByte(void); //читаем байт
-    unsigned char readLastByte(void); //читаем последний байт
+    void init (void); // i2c initialization
+    
+    
+    void sendByteByADDR(unsigned char c,unsigned char addr); // send byte to bus by device address
+    unsigned char readByte(void); 
+    unsigned char readLastByte(void);
 
 };
 #endif /* TWI_H_ */
