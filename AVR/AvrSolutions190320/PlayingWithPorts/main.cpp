@@ -17,7 +17,7 @@ void timer1_ini(void)
     TCCR1B = 0;// same for TCCR1B
     TCNT1  = 0;//initialize counter value to 0
     OCR1A = 15625;
-    
+    OCR1B = 7812;
     // turn on CTC mode
     TCCR1B |= (1 << WGM12);
     //CLK/64
@@ -26,7 +26,7 @@ void timer1_ini(void)
     
     // Timer/Counter1 CompareA Match interrupt is enabled.
     // The corresponding interrupt (at vector $00C) is executed if a CompareA match in Timer/Counter1 occurs, i.e. when the OCF1A bit is set in the Timer/Counter Interrupt Flag Register - TIFR.
-    TIMSK1 |= (1 << OCIE1A);
+    TIMSK1 |= (1 << OCIE1A)|(1 << OCIE1B);
     
     
 }
@@ -45,15 +45,15 @@ void timer0_ini(void)
     TCCR0B  |=  (0<<FOC0A)|(0<<FOC0B)|(0<<WGM02)|(1<<CS02)|(1<<CS00);
     TIMSK0 = (1 << OCIE0A)|(1 << OCIE0B);
 }
-//ISR (TIMER1_COMPA_vect)
-//{
-    //PORTB ^= (1 << PORTB4);
-//}
-//
-//ISR (TIMER1_COMPB_vect)
-//{
-    //PORTB ^= (1 << PORTB3);
-//}
+ISR (TIMER1_COMPA_vect)
+{
+    PORTB ^= (1 << PORTB4);
+}
+
+ISR (TIMER1_COMPB_vect)
+{
+    PORTB ^= (1 << PORTB3);
+}
 
 ISR (TIMER0_COMPB_vect)
 {
@@ -199,7 +199,7 @@ int main(void)
 {
     DDRB = 0xFF;
     timer0_ini();
-    //timer1_ini();
+    timer1_ini();
     sei();
     while(1);
     //turnAllOnOneByOneThenOffOneByOne2(8);
