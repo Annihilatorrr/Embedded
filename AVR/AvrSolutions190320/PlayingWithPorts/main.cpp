@@ -27,8 +27,6 @@ void timer1_ini(void)
     // Timer/Counter1 CompareA Match interrupt is enabled.
     // The corresponding interrupt (at vector $00C) is executed if a CompareA match in Timer/Counter1 occurs, i.e. when the OCF1A bit is set in the Timer/Counter Interrupt Flag Register - TIFR.
     TIMSK1 |= (1 << OCIE1A)|(1 << OCIE1B);
-    
-    
 }
 
 void timer0_ini(void)
@@ -40,29 +38,31 @@ void timer0_ini(void)
     OCR0B = 125;
     OCR0A = 250;
     
-    TCCR0A = (0<<COM0A1)|(0<<COM0A0)|(0<<COM0B1)|(1<<COM0B0)|(1<<WGM01)|(0<<WGM00);
+    TCCR0A = (1<<COM0A0)|(1<<COM0A1)|(1<<COM0B1)|(1<<COM0B0);
+    TCCR0A |= (1<<WGM01); // set CTC mode 
     
     TCCR0B  |=  (0<<FOC0A)|(0<<FOC0B)|(0<<WGM02)|(1<<CS02)|(1<<CS00);
     TIMSK0 = (1 << OCIE0A)|(1 << OCIE0B);
 }
+
+ISR (TIMER0_COMPA_vect)
+{
+    PORTB ^= (1 << PORTB0);
+}
+
+ISR (TIMER0_COMPB_vect)
+{
+    PORTB ^= (1 << PORTB1);
+}
+
 ISR (TIMER1_COMPA_vect)
 {
-    PORTB ^= (1 << PORTB4);
+    PORTB ^= (1 << PORTB2);
 }
 
 ISR (TIMER1_COMPB_vect)
 {
     PORTB ^= (1 << PORTB3);
-}
-
-ISR (TIMER0_COMPB_vect)
-{
-    PORTB ^= (1 << PORTB2);
-}
-
-ISR (TIMER0_COMPA_vect)
-{
-    PORTB ^= (1 << PORTB1);
 }
 
 class PortC
@@ -198,6 +198,7 @@ void turnSingleOneByOneThenOffOneByOne(int pinCount)
 int main(void)
 {
     DDRB = 0xFF;
+    DDRD = 0xFF;
     timer0_ini();
     timer1_ini();
     sei();
