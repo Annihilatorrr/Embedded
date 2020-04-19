@@ -8,6 +8,62 @@
 #define F_CPU 8000000UL
 #include <avr/io.h>
 #include <avr/delay.h>
+#include <avr/interrupt.h>
+
+// fires at frequence of 1000000/(15625*64)=1Hz
+void timer1_ini(void)
+{
+    TCCR1A = 0;// set entire TCCR1A register to 0
+    TCCR1B = 0;// same for TCCR1B
+    TCNT1  = 0;//initialize counter value to 0
+    OCR1A = 15625;
+    
+    // turn on CTC mode
+    TCCR1B |= (1 << WGM12);
+    //CLK/64
+    TCCR1B |= (1 << CS11) | (1 << CS10);
+    // enable timer compare interrupt
+    
+    // Timer/Counter1 CompareA Match interrupt is enabled.
+    // The corresponding interrupt (at vector $00C) is executed if a CompareA match in Timer/Counter1 occurs, i.e. when the OCF1A bit is set in the Timer/Counter Interrupt Flag Register - TIFR.
+    TIMSK1 |= (1 << OCIE1A);
+    
+    
+}
+
+void timer0_ini(void)
+{
+    TCCR0A = 0;// set entire TCCR1A register to 0
+    TCCR0B = 0;// same for TCCR1B
+    TCNT0  = 0;//initialize counter value to 0
+    
+    OCR0B = 125;
+    OCR0A = 250;
+    
+    TCCR0A = (0<<COM0A1)|(0<<COM0A0)|(0<<COM0B1)|(1<<COM0B0)|(1<<WGM01)|(0<<WGM00);
+    
+    TCCR0B  |=  (0<<FOC0A)|(0<<FOC0B)|(0<<WGM02)|(1<<CS02)|(1<<CS00);
+    TIMSK0 = (1 << OCIE0A)|(1 << OCIE0B);
+}
+//ISR (TIMER1_COMPA_vect)
+//{
+    //PORTB ^= (1 << PORTB4);
+//}
+//
+//ISR (TIMER1_COMPB_vect)
+//{
+    //PORTB ^= (1 << PORTB3);
+//}
+
+ISR (TIMER0_COMPB_vect)
+{
+    PORTB ^= (1 << PORTB2);
+}
+
+ISR (TIMER0_COMPA_vect)
+{
+    PORTB ^= (1 << PORTB1);
+}
 
 class PortC
 {
@@ -112,12 +168,12 @@ void turnAllOnOneByOneThenOffOneByOne2(int pinCount)
     inport.setAllAsInput();
     inport.setHigh(2);
     char i = -1;
-    char to = pinCount*2;
+    char to = pinCount<<1;
     for (char i = 0; i < to; ++i )
     {
         if (inport.bitIsClear(2))
-        {  
-          _delay_ms(1000);
+        {
+            _delay_ms(1000);
         }
         port.togglePin(i);
         _delay_ms(500);
@@ -141,7 +197,12 @@ void turnSingleOneByOneThenOffOneByOne(int pinCount)
 
 int main(void)
 {
-    turnAllOnOneByOneThenOffOneByOne2(8);
+    DDRB = 0xFF;
+    timer0_ini();
+    //timer1_ini();
+    sei();
+    while(1);
+    //turnAllOnOneByOneThenOffOneByOne2(8);
     //turnAllOnOneByOneThenOffOneByOne(8);
 }
 
