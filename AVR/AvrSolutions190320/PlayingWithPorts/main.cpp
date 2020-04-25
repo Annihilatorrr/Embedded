@@ -38,7 +38,8 @@ void timer0_ini(void)
     OCR0B = 125;
     OCR0A = 250;
     
-    TCCR0A = (1<<COM0A0)|(1<<COM0A1)|(1<<COM0B1)|(1<<COM0B0);
+    TCCR0A = (1<<COM0A0)|(0<<COM0A1); // toggle PD6 at compare match
+    TCCR0A |= (1<<COM0B1)|(1<<COM0B0);
     TCCR0A |= (1<<WGM01); // set CTC mode 
     
     TCCR0B  |=  (0<<FOC0A)|(0<<FOC0B)|(0<<WGM02)|(1<<CS02)|(1<<CS00);
