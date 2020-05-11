@@ -60,7 +60,7 @@ public:
     void SPI1_Init(void) {
 
         RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
         // PA5 as SCK
         GPIOA->MODER &= ~(GPIO_MODER_MODER5_0);
         GPIOA->MODER |= (GPIO_MODER_MODER5_1);  // alternate function
@@ -93,12 +93,12 @@ public:
 
         for (int i = 1; i <= 8; i++)
         {
-            sendCommand(i, 0x0f);
+            sendCommand(i, 0x0f); //
         }
 
-        sendCommand(0x0C, 0x01);
-        sendCommand(0x0B, 0x07);
-        sendCommand(0x09, 0x00);
+        sendCommand(0x0C, 0x01); // shutdown mode ON
+        sendCommand(0x0B, 0x07); // turn on 7 segments
+        sendCommand(0x09, 0x00); // Decode-Mode OFF for all
 
         sendCommand(0x08, 0x30); // 1
         sendCommand(0x07, 0x6D); // 2
