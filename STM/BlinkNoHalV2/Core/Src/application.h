@@ -61,9 +61,8 @@ public:
 
 	void SPI1_Init(void)
 	{
-		//Включаем тактирование SPI1 и GPIOA
-		RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-		GPIOA->MODER &=~ (GPIO_MODER_MODER5_0);
+		RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+		RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // enable SPI clock
 
 		// PA5 as SCK
 		GPIOA->MODER &=~ (GPIO_MODER_MODER5_0);
@@ -78,7 +77,7 @@ public:
 		GPIOA->MODER |= GPIO_MODER_MODER7_1;  // alternate function
 
 		GPIOA->MODER |= GPIO_MODER_MODER4_0;  // GPO
-		GPIOA->ODR = GPIO_ODR_ODR_4;              // deselect
+		GPIOA->ODR = GPIO_ODR_ODR_4;          // deselect
 		/**********************************************************/
 		/*** Настройка выводов GPIOA на работу совместно с SPI1 ***/
 		/**********************************************************/
@@ -118,6 +117,7 @@ public:
 
 		SPI1->CR1 |= 1<<SPI_CR1_SPE_Pos; //Включаем SPI
 
+
 		// transmit test packet
 		while(!(SPI1->SR & SPI_SR_TXE));      // make sure TX buffer is empty
 		while(SPI1->SR & SPI_SR_BSY);         // make sure SPI isn't busy
@@ -129,8 +129,8 @@ public:
 		}
 
 		sendCommand(0x0C, 0x01);
-		sendCommand(0x0B, 0x07);
-		sendCommand(0x09, 0x00);
+		sendCommand(0x0B, 0x01);
+		sendCommand(0x09, 0xff);
 
 		sendCommand(0x08, 0x30);
 		sendCommand(0x07, 0x6D);
