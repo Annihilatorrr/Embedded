@@ -11,10 +11,6 @@
 #include "stm32f4xx_hal.h"
 
 
-
-#define LED_PORT GPIOA
-#define LED_GREEN (1 << 5) /* port A, pin 5 */
-
 #include "display7segmentmax7219.h"
 
 class Application
@@ -25,25 +21,6 @@ public:
 	{
 
 	}
-    void runPA5Blinking(int delay)
-    {
-        LED_PORT->ODR = LED_GREEN;
-        delayMs(delay);
-        switch_leds_off();
-        delayMs(delay);
-    }
-
-    void runPA5BlinkingV2(int delay)
-    {
-        LED_PORT->BSRR = LED_GREEN;
-        delayMs(delay);
-        LED_PORT->BSRR = 0x00200000; // reset bit PIN5 by setting bit 21 of bssr
-        delayMs(delay);
-    }
-
-    void switch_leds_off(void){
-        LED_PORT->ODR = 0;
-    }
 
     void delayMs(int delay)
     {
@@ -54,11 +31,18 @@ public:
         }
     }
 
-    void SPI1_Init(void)
+    void start(void)
     {
 
         m_display.shutDownOn();
         m_display.clear(8);
+        m_display.setVisibleDigits(3);
+        m_display.setNoDecodeAllDigits();
+        for (int i = 0 ; i < 10000; ++i)
+        {
+        	m_display.displayInt64Number(i, true);
+        	delayMs(10000);
+        }
 
     }
 };

@@ -17,8 +17,11 @@
 #define MAX7219_INTENSITY_REG   (0x0A)
 #define MAX7219_SCANLIMIT_REG   (0x0B)
 #define MAX7219_DISPLAYTEST_REG (0x0F)
+#define MAX7219_CHAR_NEGATIVE   (0xa)
 
+#include <stdlib.h>
 #include "spi.h"
+
 class Display7SegmentMax7219
 {
 	SPI m_spi;
@@ -48,6 +51,11 @@ public:
 		sendCommand(MAX7219_SHUTDOWN_REG, MAX7219_ON); // 0x0C
 	}
 
+	void setVisibleDigits(unsigned char number)
+	{
+		sendCommand(MAX7219_SCANLIMIT_REG, number - 1); // 0x0B
+	}
+
 	void clear(unsigned char digits)
 	{
         for (int i = 1; i <= digits; i++)
@@ -55,14 +63,54 @@ public:
             sendCommand(i, 0x0f); // clear
         }
 
+	}
 
+	void setNoDecodeAllDigits()
+	{
+		sendCommand(MAX7219_DECODE_REG, 0xff); // 0x09 no decode mode for 0-7 digits
+	}
 
-        sendCommand(MAX7219_SCANLIMIT_REG, 5); // 0x0B
-        sendCommand(MAX7219_DECODE_REG, 0xff); // 0x09 no decode mode for 0-7 digits
+	void displayInt64Number(long number, bool divideTriad)
+	{
+	    uint8_t digits[8]{};
+	    bool isNegative = number < 0;
+	    number = abs(number);
+	    int count = 0;
+	    do
+	    {
+	        uint8_t thisDigit = number % 10;
+	        digits[7-count] = thisDigit;
+	        count++;
+	        number /= 10;
+
+	    } while(number != 0);
+
+	    if (isNegative)
+	    {
+	    	sendCommand(count + 1, MAX7219_CHAR_NEGATIVE);
+	        setVisibleDigits(count+1);
+	    }
+	    else
+	    {
+	    	setVisibleDigits(count);
+	    }
+
+	    for (int i = 0; i < count; i++)
+	    {
+	        uint8_t thisDigit = digits[7-i];
+	        sendCommand(i + 1, thisDigit);
+	    }
+	}
+
+	void outputInt()
+	{
         sendCommand(MAX7219_DIGIT_REG(0), 0x1);
         sendCommand(MAX7219_DIGIT_REG(1), 0x2);
         sendCommand(MAX7219_DIGIT_REG(2), 0x3);
-
+        sendCommand(MAX7219_DIGIT_REG(3), 0x4);
+        sendCommand(MAX7219_DIGIT_REG(4), 0x4);
+        sendCommand(MAX7219_DIGIT_REG(5), 0x4);
+        sendCommand(MAX7219_DIGIT_REG(6), 0x4);
 	}
 
 	void shutDownOff()
