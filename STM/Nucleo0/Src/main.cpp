@@ -38,8 +38,9 @@ extern "C" void TIM2_IRQHandler(void)
 		TIM2->SR = ~TIM_SR_UIF;        //сбросить флаг. Да тут, в отличии от AVR это надо делать вручную.
 
 		// Тут делаем свои дела
-		display.displayInt64Number(i++, false);
+		//display.displayInt64Number(i++, false);
 		//GPIOA->ODR ^= (1U << 5);  // Toggle LED
+		GPIOB->ODR ^= (1U << 5);  // Toggle LED
 	}
 
 }
@@ -51,6 +52,12 @@ int main(void)
 	display.setVisibleDigits(3);
 	display.setNoDecodeAllDigits();
 
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+
+	GPIOB->MODER &= ~GPIO_MODER_MODER5;
+	GPIOB->MODER |= GPIO_MODER_MODER5_0;
+	GPIOB->OTYPER &= ~GPIO_OTYPER_OT_5;
+	GPIOB->ODR ^= (1U << 5);  // Toggle LED
 	__enable_irq();
 	//SystemInit();
 	/* Each module is powered separately. In order to turn on a module
@@ -125,8 +132,8 @@ int main(void)
 	//GPIOA->MODER |= GPIO_MODER_MODER5_0;  /* Set up port A pin 5 as output*/
 
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    	// Подаем тактирование на таймер от шины APB1
-	TIM2->PSC = 7;				// Частота этой шины 36 мегагерц. Так что в предделитель записываем 36-1, получим 1МГц
-	TIM2->ARR = (128000-1);				// Потолком счета таймера укажем 100-1. Получим деление на 100 в частоте вызова прерываний.
+	TIM2->PSC = 15;				// Частота этой шины 16 мегагерц. Так что в предделитель записываем 36-1, получим 1МГц
+	TIM2->ARR = (1000000-1); // 1s				// Потолком счета таймера укажем 100-1. Получим деление на 100 в частоте вызова прерываний.
 
 
 	TIM2->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS | TIM_CR1_CEN;  		//  ARPE=1 - буфферизируем регистр предзагрузки таймера опциональная вещь.
