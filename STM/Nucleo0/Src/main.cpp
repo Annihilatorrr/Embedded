@@ -38,9 +38,9 @@ extern "C" void TIM2_IRQHandler(void)
 		TIM2->SR = ~TIM_SR_UIF;        //сбросить флаг. Да тут, в отличии от AVR это надо делать вручную.
 
 		// Тут делаем свои дела
-		//display.displayInt64Number(i++, false);
+		display.displayInt64Number(i++, false);
 		//GPIOA->ODR ^= (1U << 5);  // Toggle LED
-		GPIOB->ODR ^= (1U << 5);  // Toggle LED
+		//GPIOB->ODR ^= (1U << 5);  // Toggle LED
 	}
 
 }
@@ -51,7 +51,7 @@ int main(void)
 	display.clear(8);
 	display.setVisibleDigits(3);
 	display.setNoDecodeAllDigits();
-
+	display.setIntensity(0);
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 
 	GPIOB->MODER &= ~GPIO_MODER_MODER5;
