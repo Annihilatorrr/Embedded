@@ -1,6 +1,0 @@
-f4xxx.cpp:11:1:F4xxx::F4xxx()	16	static
-f4xxx.cpp:17:6:void F4xxx::enableAHB1PortA()	16	static
-f4xxx.cpp:22:6:void F4xxx::setPin5Mode(F4xxx::PortMode)	16	static
-f4xxx.cpp:41:6:void F4xxx::setPin5High()	16	static
-f4xxx.cpp:59:5:int F4xxx::clockInit()	16	static
-f4xxx.cpp:240:5:int F4xxx::enableHse()	24	static
