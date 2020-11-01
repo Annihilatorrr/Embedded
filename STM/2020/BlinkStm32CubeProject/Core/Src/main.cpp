@@ -73,7 +73,7 @@ int main(void)
 {
 	F4xxx f4;
 	f4.clockInit();
-	f4.enableAHB1PortA();
+	f4.enableAHB1(F4xxx::RCC_AHB1::PortA);
 	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
 
     volatile int i;

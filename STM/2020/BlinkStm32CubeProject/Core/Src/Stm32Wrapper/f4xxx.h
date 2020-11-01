@@ -67,15 +67,28 @@ public:
 	enum class Port
 	{
 		A = 0x0000UL,
-		B = 0x0400UL,
-		C_BASE = 0x0800UL,
-		D_BASE = 0x0C00UL,
-		E_BASE = 0x1000UL,
-		H_BASE = 0x1C00UL
+				B = 0x0400UL,
+				C = 0x0800UL,
+				D = 0x0C00UL,
+				E = 0x1000UL,
+				H = 0x1C00UL
+	};
+
+	enum class RCC_AHB1
+	{
+		PortA = 0U,
+				PortB = 1U,
+				PortC = 2U,
+				PortD = 3U,
+				PortE = 4U,
+				PortH = 7U,
+				_CRC = 12U,
+				_DMA1 = 21U,
+				_DMA2 = 22U
 	};
 
 	F4xxx();
-	void enableAHB1PortA();
+	void enableAHB1(RCC_AHB1 hardware);
 	void setPinMode(Port port, PortMode mode, unsigned int pin);
 	void setPinHigh(Port port, unsigned pin);
 	void setPinLow(Port port, unsigned pin);

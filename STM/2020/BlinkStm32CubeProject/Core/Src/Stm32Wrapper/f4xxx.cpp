@@ -14,9 +14,9 @@ F4xxx::F4xxx()
 
 }
 
-void F4xxx::enableAHB1PortA()
+void F4xxx::enableAHB1(RCC_AHB1 hardware)
 {
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	RCC->AHB1ENR |= (0x1UL << (unsigned)hardware);
 }
 
 void F4xxx::setPinMode(Port port, PortMode mode, unsigned int pin)
