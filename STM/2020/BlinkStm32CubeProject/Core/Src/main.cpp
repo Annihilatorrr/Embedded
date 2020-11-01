@@ -77,7 +77,7 @@ int main(void)
 	f4.enableAHB1PortA();
     //GPIOA->MODER |= GPIO_MODER_MODE5_0;                 //GPIOA pin5 selected as output
 
-	f4.setPin5Mode(F4xxx::PortMode::Output);
+	f4.setPinMode(F4xxx::PortMode::Output, 5);
 
 	//GPIOA->ODR   |= GPIO_ODR_OD5;                       //GPIOA pin5 set high
     volatile int i;

@@ -19,23 +19,24 @@ void F4xxx::enableAHB1PortA()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 }
 
-void F4xxx::setPin5Mode(PortMode mode)
+void F4xxx::setPinMode(PortMode mode, unsigned int pin)
 {
+	uint32_t moder = m_gpioModerPositions[pin]<<1;
 	switch (mode)
 	{
 	case PortMode::Input:
 		break;
 	case PortMode::Output:
-		GPIOA->MODER |= GPIO_MODER_MODE5_0;
+		GPIOA->MODER |= (0x1UL << moder);
 		break;
 	case PortMode::Alternative:
-		GPIOA->MODER |= GPIO_MODER_MODE5_1;
+		GPIOA->MODER |= (0x2UL << moder);
 		break;
 	case PortMode::Analog:
-		GPIOA->MODER |= GPIO_MODER_MODE5_Msk;
+		GPIOA->MODER |= (0x3UL << moder);
 		break;
 	}
-	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5;
+	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5_0;
 }
 
 void F4xxx::setPin5High()
@@ -51,10 +52,14 @@ void F4xxx::setPin5High()
 //  1 - не запустился кварцевый генератор
 //  2 - не запустился PLL
 
-#define PLL_M   4
-#define PLL_N   168
-#define PLL_P   2
-#define PLL_Q   7
+#define PLL_M      8
+#define PLL_N      336
+
+/* SYSCLK = PLL_VCO / PLL_P */
+#define PLL_P      4
+
+/* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
+#define PLL_Q      7
 
 int F4xxx::clockInit(void)
 {
@@ -89,6 +94,7 @@ int F4xxx::clockInit(void)
 			| RCC_PLLCFGR_PLLQ_2
 			| RCC_PLLCFGR_PLLQ_2);
 
+	RCC->PLLCFGR |= PLL_M|(PLL_Q<<24)|(PLL_P<<16)|(PLL_N<<6)|RCC_PLLCFGR_PLLSRC_HSE;
 	RCC->CR|=RCC_CR_PLLON;
 	while(!(RCC->CR&RCC_CR_PLLRDY));
 
