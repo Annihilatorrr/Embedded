@@ -19,29 +19,37 @@ void F4xxx::enableAHB1PortA()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 }
 
-void F4xxx::setPinMode(PortMode mode, unsigned int pin)
+void F4xxx::setPinMode(Port port, PortMode mode, unsigned int pin)
 {
-	uint32_t moder = m_gpioModerPositions[pin]<<1;
+	uint32_t moder = m_gpioModerPositions[pin];
+	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port + AHB1PERIPH_BASE));
 	switch (mode)
 	{
 	case PortMode::Input:
 		break;
 	case PortMode::Output:
-		GPIOA->MODER |= (0x1UL << moder);
+		gpioPort->MODER |= (0x1UL << moder);
 		break;
 	case PortMode::Alternative:
-		GPIOA->MODER |= (0x2UL << moder);
+		gpioPort->MODER |= (0x2UL << moder);
 		break;
 	case PortMode::Analog:
-		GPIOA->MODER |= (0x3UL << moder);
+		gpioPort->MODER |= (0x3UL << moder);
 		break;
 	}
 	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5_0;
 }
 
-void F4xxx::setPin5High()
+void F4xxx::setPinHigh(Port port, unsigned pin)
 {
-	GPIOA->ODR |= GPIO_ODR_OD5;
+	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port + AHB1PERIPH_BASE));
+	gpioPort->ODR |= (0x1UL << pin);
+}
+
+void F4xxx::setPinLow(Port port, unsigned pin)
+{
+	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port + AHB1PERIPH_BASE));
+	gpioPort->ODR &= ~(0x1UL << pin);
 }
 
 //Настраиваем тактирование системы от внешнего кварца

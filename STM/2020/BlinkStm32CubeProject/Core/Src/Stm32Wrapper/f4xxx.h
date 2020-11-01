@@ -9,24 +9,76 @@
 #define SRC_STM32WRAPPER_F4XXX_H_
 
 #include <inttypes.h>
+#include "stm32f4xx_hal.h"
 
 class F4xxx {
 	void enableHse();
-	uint32_t m_gpioModerPositions[16]{0U, 1U, 2U, 3U, 4U ,5U, 6U, 7U, 8U, 9U, 10U, 11U, 12U, 13U, 14U, 15U};
+
+
+	uint32_t m_gpioModerPositions[16]
+								  {
+		GPIO_MODER_MODER0_Pos,
+		GPIO_MODER_MODER1_Pos,
+		GPIO_MODER_MODER2_Pos,
+		GPIO_MODER_MODER3_Pos,
+		GPIO_MODER_MODER4_Pos,
+		GPIO_MODER_MODER5_Pos,
+		GPIO_MODER_MODER6_Pos,
+		GPIO_MODER_MODER7_Pos,
+		GPIO_MODER_MODER8_Pos,
+		GPIO_MODER_MODER9_Pos,
+		GPIO_MODER_MODER10_Pos,
+		GPIO_MODER_MODER11_Pos,
+		GPIO_MODER_MODER12_Pos,
+		GPIO_MODER_MODER13_Pos,
+		GPIO_MODER_MODER14_Pos,
+		GPIO_MODER_MODER15_Pos
+								  };
+
+	uint32_t m_gpioOdrPositions[16]
+								{
+		GPIO_ODR_OD0,
+		GPIO_ODR_OD1,
+		GPIO_ODR_OD2,
+		GPIO_ODR_OD3,
+		GPIO_ODR_OD4,
+		GPIO_ODR_OD5,
+		GPIO_ODR_OD6,
+		GPIO_ODR_OD7,
+		GPIO_ODR_OD8,
+		GPIO_ODR_OD9,
+		GPIO_ODR_OD10,
+		GPIO_ODR_OD11,
+		GPIO_ODR_OD12,
+		GPIO_ODR_OD13,
+		GPIO_ODR_OD14,
+		GPIO_ODR_OD15
+								};
 public:
 
 	enum class PortMode
 	{
 		Input = 0,
-		Output,
-		Alternative,
-		Analog
+				Output,
+				Alternative,
+				Analog
+	};
+
+	enum class Port
+	{
+		A = 0x0000UL,
+		B = 0x0400UL,
+		C_BASE = 0x0800UL,
+		D_BASE = 0x0C00UL,
+		E_BASE = 0x1000UL,
+		H_BASE = 0x1C00UL
 	};
 
 	F4xxx();
 	void enableAHB1PortA();
-	void setPinMode(PortMode mode, unsigned int pin);
-	void setPin5High();
+	void setPinMode(Port port, PortMode mode, unsigned int pin);
+	void setPinHigh(Port port, unsigned pin);
+	void setPinLow(Port port, unsigned pin);
 	int clockInit(void);
 };
 

@@ -65,7 +65,7 @@ void SystemClock_Config(void);
 void delay()
 {
 	volatile int i;
-	for( i=0; i<1000000; ++i );
+	for( i=0; i<100000; ++i );
 }
 
 
@@ -73,20 +73,17 @@ int main(void)
 {
 	F4xxx f4;
 	f4.clockInit();
-	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN; // gpioa enable
 	f4.enableAHB1PortA();
-    //GPIOA->MODER |= GPIO_MODER_MODE5_0;                 //GPIOA pin5 selected as output
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
 
-	f4.setPinMode(F4xxx::PortMode::Output, 5);
-
-	//GPIOA->ODR   |= GPIO_ODR_OD5;                       //GPIOA pin5 set high
     volatile int i;
 
-    while(1) {
+    while(1)
+    {
 
-        GPIOA->ODR |= GPIO_ODR_OD5;
+        f4.setPinHigh(F4xxx::Port::A, 5);
         delay();
-        GPIOA->ODR &= ~GPIO_ODR_OD5;
+        f4.setPinLow(F4xxx::Port::A, 5);
         delay();
     }
 	//  /* USER CODE BEGIN 1 */
