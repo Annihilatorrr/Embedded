@@ -68,24 +68,132 @@ void delay()
 	for( i=0; i<100000; ++i );
 }
 
-
-int main(void)
+void ledBlinking()
 {
 	F4xxx f4;
 	f4.clockInit();
 	f4.enableAHB1(F4xxx::RCC_AHB1::PortA);
 	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
 
-    volatile int i;
+	volatile int i;
 
-    while(1)
-    {
+	while(1)
+	{
 
-        f4.setPinHigh(F4xxx::Port::A, 5);
-        delay();
-        f4.setPinLow(F4xxx::Port::A, 5);
-        delay();
-    }
+		f4.setPinHigh(F4xxx::Port::A, 5);
+		delay();
+		f4.setPinLow(F4xxx::Port::A, 5);
+		delay();
+	}
+}
+
+#define TIMx_CLK                16000000UL // Hz
+#define TIMx_Internal_Frequency 1000UL     // Hz
+#define TIMx_Out_Frequency      1UL        // Hz
+
+#define Prescaler (TIMx_CLK /TIMx_Internal_Frequency)-1UL
+#define Period (TIMx_Internal_Frequency/TIMx_Out_Frequency)-1UL
+
+void initTimer()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    // Тактирование на таймер 6
+
+	TIM2->PSC = Prescaler;			// Шина на 36мгц, делим. Получаем 1Мгц
+	TIM2->ARR = Period;			// Тикать будет с частотой 10Кгц.
+
+	TIM2->DIER |= TIM_DIER_UIE;
+	TIM2->CR1|=TIM_CR1_CEN;
+	NVIC_SetPriority(TIM2_IRQn,0);
+	NVIC_EnableIRQ(TIM2_IRQn);
+
+	//RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;    	// Подаем тактирование на таймер от шины APB1
+	/*TIM2->PSC = 15;				// Частота этой шины 16 мегагерц. Так что в предделитель записываем 36-1, получим 1МГц
+	TIM2->ARR = (1000000-1); // 1s				// Потолком счета таймера укажем 100-1. Получим деление на 100 в частоте вызова прерываний.
+
+
+	TIM2->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS | TIM_CR1_CEN;  		//  ARPE=1 - буфферизируем регистр предзагрузки таймера опциональная вещь.
+	// URS=1	- разрешаем из событий таймера только события от переполнения
+	// CEN=1 - запускаем таймер
+	TIM2->DIER  |= TIM_DIER_UIE;					// UIE=1 - Разрешаем прерывание от переполнения
+
+	NVIC_SetPriority(TIM2_IRQn,14);				// Очень важный момент!!! Надо правильно выставить приоритеты. Они должны быть в диапазоне между
+	// configKERNEL_INTERRUPT_PRIORITY  и configMAX_SYSCALL_INTERRUPT_PRIORITY
+	NVIC_EnableIRQ(TIM2_IRQn);
+	return;
+	F4xxx f4;
+	f4.clockInit();
+	// Basic Timer configuration
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;         // Enable timer 2 clock
+	TIM2->CR1    &= ~TIM_CR1_CEN;               // Disable counter
+	TIM2->CR2    &= ~TIM_CR2_TI1S;              // TI1 only
+
+	TIM2->PSC     = 1000;         // 10000*100s = 1s
+	TIM2->CR1    &= ~TIM_CR1_DIR;               // Up direction
+
+	// Capture 2
+	GPIOA->MODER  |=  GPIO_MODE_AF_PP << 2;     // Alternate function on pin 1
+	GPIOA->AFR[0] |=  GPIO_AF1_TIM2 << 4;
+	TIM2->CCMR1   |=  TIM_CCMR1_CC2S_0;         // Set capture channel 2 as input on TI2 (CC2S = 01)
+	TIM2->CCER    &= ~TIM_CCER_CC2P;            // Set capture on rising edge event
+	TIM2->CCER    &= ~TIM_CCER_CC2NP;
+	TIM2->CCER    |=  TIM_CCER_CC2E;            // Enable capture on channel 1
+	TIM2->DIER    |=  TIM_DIER_CC2IE;           // Enable interrupt on capture channel 1
+
+	// Timer start and IRQ enable
+	TIM2->DIER |= TIM_DIER_UIE;                 // Enable Update interrupt
+	NVIC_EnableIRQ( TIM2_IRQn );                // Vector name with my startup is TIM2_IRQHandler()
+	TIM2->CR1 |= TIM_CR1_CEN;                   // Faster Pussycat Kill! Kill!
+	 */
+	//Configure the Internal Clock source
+	/*TIM2->SMCR &= ~TIM_SMCR_SMS;  // Internal clock source
+	TIM2-> CR1 |= TIM_CR1_CEN;
+
+	//Select the up counter mode
+	TIM2->CR1 |= TIM_CR1_CEN;
+	TIM2->CR1 &= ~TIM_CR1_CKD;
+
+	// Set the clock division to 1
+	TIM2->CR1 |= TIM_CR1_CEN;
+
+	//Set the Autoreload value
+	TIM2->ARR = 49999;//PERIOD
+
+	// Generate an update event to reload the Prescaler value immediately
+	TIM2->EGR = TIM_EGR_UG;
+	TIM2->CCMR1 &= ~TIM_CCMR1_CC2S;
+
+	TIM2 ->RCR |= ~TIM_RCR_REP;
+
+	TIM2 ->SR = 0;*/
+
+}
+
+extern "C" void TIM2_IRQHandler(void) {
+
+	//Is the timer set?
+	if(TIM2->SR & TIM_SR_UIF) {
+
+		GPIOA->ODR ^= (0x1UL << 5);
+		TIM2->SR = ~TIM_SR_UIF;
+		//Clears flag.
+		//TIM2->SR &= ~TIM_SR_UIF;
+	}
+}
+
+int main(void)
+{
+	__enable_irq();
+	F4xxx f4;
+	f4.clockInit();
+	f4.enableAHB1(F4xxx::RCC_AHB1::PortA);
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
+	//ledBlinking();
+	initTimer();
+	while(true)
+	{
+
+	}
+	//__enable_irq();
 	//  /* USER CODE BEGIN 1 */
 	//
 	//  /* USER CODE END 1 */

@@ -120,7 +120,7 @@ int F4xxx::clockInit(void)
 	RCC->CFGR &= ~RCC_CFGR_SW; // reset SW0, SW1.
 	RCC->CFGR |= RCC_CFGR_SW_PLL;
 	RCC->CR|=RCC_CR_PLLON;
-	while((RCC->CFGR & RCC_CFGR_SWS)!=RCC_CFGR_SWS_PLL); // wait for switchin to PLL (while PLL is not used as system clock)
+	while((RCC->CFGR & RCC_CFGR_SWS)!=RCC_CFGR_SWS_PLL); // wait for switching to PLL (while PLL is not used as system clock)
 
 	// for power saving
 	RCC->CR &= ~(RCC_CR_HSION);
