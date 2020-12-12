@@ -43,13 +43,13 @@ void F4xxx::setPinMode(Port port, PortMode mode, unsigned int pin)
 
 void F4xxx::setPinHigh(Port port, unsigned pin)
 {
-	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port + AHB1PERIPH_BASE));
+	auto* gpioPort = ((GPIO_TypeDef *) (unsigned)port);
 	gpioPort->ODR |= (0x1UL << pin);
 }
 
 void F4xxx::setPinLow(Port port, unsigned pin)
 {
-	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port + AHB1PERIPH_BASE));
+	auto* gpioPort = ((GPIO_TypeDef *) (unsigned)port);
 	gpioPort->ODR &= ~(0x1UL << pin);
 }
 
