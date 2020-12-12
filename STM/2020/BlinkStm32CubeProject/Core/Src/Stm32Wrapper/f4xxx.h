@@ -92,7 +92,7 @@ public:
 	void setPinMode(Port port, PortMode mode, unsigned int pin);
 	void setPinHigh(Port port, unsigned pin);
 	void setPinLow(Port port, unsigned pin);
-	int clockInit(void);
+	int clockInit(int pllM, int pllN, int pllP, int pllQ);
 };
 
 #endif /* SRC_STM32WRAPPER_F4XXX_H_ */

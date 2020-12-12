@@ -60,16 +60,7 @@ void F4xxx::setPinLow(Port port, unsigned pin)
 //  1 - не запустился кварцевый генератор
 //  2 - не запустился PLL
 
-#define PLL_M      8
-#define PLL_N      336
-
-/* SYSCLK = PLL_VCO / PLL_P */
-#define PLL_P      4
-
-/* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
-#define PLL_Q      7
-
-int F4xxx::clockInit(void)
+int F4xxx::clockInit(int pllM, int pllN, int pllP, int pllQ)
 {
 	enableHse();
 	//FLASH
@@ -102,7 +93,7 @@ int F4xxx::clockInit(void)
 			| RCC_PLLCFGR_PLLQ_2
 			| RCC_PLLCFGR_PLLQ_2);
 
-	RCC->PLLCFGR |= PLL_M|(PLL_Q<<24)|(PLL_P<<16)|(PLL_N<<6)|RCC_PLLCFGR_PLLSRC_HSE;
+	RCC->PLLCFGR |= pllM|(pllQ<<24)|(pllP<<16)|(pllN<<6)|RCC_PLLCFGR_PLLSRC_HSE;
 	RCC->CR|=RCC_CR_PLLON;
 	while(!(RCC->CR&RCC_CR_PLLRDY));
 
