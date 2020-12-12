@@ -87,13 +87,13 @@ void ledBlinking()
 	}
 }
 
-//#define TIMx_CLK                16000000UL // Hz
-//#define TIMx_Internal_Frequency 1000UL     // Hz
-//#define TIMx_Out_Frequency      1UL        // Hz
-
-#define TIMx_CLK                48000000UL // Hz
+#define TIMx_CLK                16000000UL // Hz
 #define TIMx_Internal_Frequency 16000000UL     // Hz
 #define TIMx_Out_Frequency      1UL        // Hz
+
+//#define TIMx_CLK                48000000UL // Hz
+//#define TIMx_Internal_Frequency 16000000UL     // Hz
+//#define TIMx_Out_Frequency      1UL        // Hz
 
 #define Prescaler (TIMx_CLK /TIMx_Internal_Frequency)-1UL
 #define Period (TIMx_Internal_Frequency/TIMx_Out_Frequency)-1UL
@@ -102,11 +102,26 @@ void initTimer()
 {
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-	TIM2->PSC = 0;
-	TIM2->ARR = 0; // the reload value of the timer counter
+    TIM2->PSC = Prescaler;
+    TIM2->ARR = Period; // the reload value of the timer counter
+
+    TIM2->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
+
+    TIM2->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2;
+    TIM2->CCMR2 |= TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2;
+
+
+
+	//TIM2->CCER &= ~TIM_CCER_CC4P;//выбираем захват по переднему фронту
 
 	TIM2->DIER |= TIM_DIER_UIE;
 	TIM2->CR1 |= TIM_CR1_CEN;
+
+	TIM2->CCR1 = 1000;
+	TIM2->CCR2 = 1000;
+	TIM2->CCR3 = 1000;
+	TIM2->CCR4 = 1000;
+
 	NVIC_SetPriority(TIM2_IRQn,0);
 	NVIC_EnableIRQ(TIM2_IRQn);
 }
@@ -116,7 +131,6 @@ extern "C" void TIM2_IRQHandler(void) {
 	//Is the timer set?
 	if(TIM2->SR & TIM_SR_UIF) {
 
-		GPIOA->ODR ^= (0x1UL << 5);
 		GPIOA->ODR ^= (0x1UL << 5);
 		TIM2->SR = ~TIM_SR_UIF;
 		//TIM2->SR = ~TIM_SR_UIF;
@@ -128,14 +142,18 @@ extern "C" void TIM2_IRQHandler(void) {
 int main(void)
 {
 	__enable_irq();
-	//F4xxx f4;
+	F4xxx f4;
 
 	//f4.clockInit(8, 336, 4, 7);
-	//f4.enableAHB1(F4xxx::RCCEnableAhb1PeripheralClockFor::PortA);
-	//f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
-	//f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 6);
-	ledBlinking();
-	//initTimer();
+	f4.enableAHB1(F4xxx::RCCEnableAhb1PeripheralClockFor::PortA);
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 1);
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 2);
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 3);
+	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 4);
+	GPIOA ->AFR[0] |= GPIO_AF1_TIM2<<4;
+	//ledBlinking();
+	initTimer();
 	while(true)
 	{
 

@@ -14,7 +14,6 @@
 class F4xxx {
 	void enableHse();
 
-
 	uint32_t m_gpioModerPositions[16]
 								  {
 		GPIO_MODER_MODER0_Pos,
@@ -77,14 +76,14 @@ public:
 	enum class RCCEnableAhb1PeripheralClockFor
 	{
 		PortA = RCC_AHB1ENR_GPIOAEN_Pos,
-				PortB = 1U,
-				PortC = 2U,
-				PortD = 3U,
-				PortE = 4U,
-				PortH = 7U,
-				_CRC = 12U,
-				_DMA1 = 21U,
-				_DMA2 = 22U
+				PortB = RCC_AHB1ENR_GPIOBEN_Pos,
+				PortC = RCC_AHB1ENR_GPIOCEN_Pos,
+				PortD = RCC_AHB1ENR_GPIODEN_Pos,
+				PortE = RCC_AHB1ENR_GPIOEEN_Pos,
+				PortH = RCC_AHB1ENR_GPIOHEN_Pos,
+				_CRC = RCC_AHB1ENR_CRCEN_Pos,
+				_DMA1 = RCC_AHB1ENR_DMA1EN_Pos,
+				_DMA2 = RCC_AHB1ENR_DMA2EN_Pos
 	};
 
 	F4xxx();
