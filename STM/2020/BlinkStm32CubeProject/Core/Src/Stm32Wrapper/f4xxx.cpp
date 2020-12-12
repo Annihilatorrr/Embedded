@@ -14,15 +14,16 @@ F4xxx::F4xxx()
 
 }
 
-void F4xxx::enableAHB1(RCC_AHB1 hardware)
+void F4xxx::enableAHB1(RCCEnableAhb1PeripheralClockFor hardware)
 {
+	//auto d = RCC_AHB1ENR_IOPAEN | RCC_APB2ENR_AFIOEN;
 	RCC->AHB1ENR |= (0x1UL << (unsigned)hardware);
 }
 
 void F4xxx::setPinMode(Port port, PortMode mode, unsigned int pin)
 {
 	uint32_t moder = m_gpioModerPositions[pin];
-	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port + AHB1PERIPH_BASE));
+	auto* gpioPort = ((GPIO_TypeDef *) ((unsigned)port));
 	switch (mode)
 	{
 	case PortMode::Input:
@@ -37,7 +38,7 @@ void F4xxx::setPinMode(Port port, PortMode mode, unsigned int pin)
 		gpioPort->MODER |= (0x3UL << moder);
 		break;
 	}
-	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5_0;
+	GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5; // max speed 3ul (50 mhz)
 }
 
 void F4xxx::setPinHigh(Port port, unsigned pin)
@@ -52,18 +53,13 @@ void F4xxx::setPinLow(Port port, unsigned pin)
 	gpioPort->ODR &= ~(0x1UL << pin);
 }
 
-//Настраиваем тактирование системы от внешнего кварца
-//через PLL на саксимально возможных частотах.
-//Внешний кварц должен быть на 8МГц
-//Возвращает:
-//  0 - завершено успешно
-//  1 - не запустился кварцевый генератор
-//  2 - не запустился PLL
 
 int F4xxx::clockInit(int pllM, int pllN, int pllP, int pllQ)
 {
 	enableHse();
+
 	//FLASH
+	CLEAR_BIT(FLASH->ACR, FLASH_ACR_PRFTEN);
 	FLASH->ACR |= FLASH_ACR_PRFTEN;
 	FLASH->ACR&= ~FLASH_ACR_LATENCY;
 	FLASH->ACR |= FLASH_ACR_LATENCY_5WS | FLASH_ACR_ICEN | FLASH_ACR_DCEN;

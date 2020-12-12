@@ -66,17 +66,17 @@ public:
 
 	enum class Port
 	{
-		A = 0x0000UL,
-				B = 0x0400UL,
-				C = 0x0800UL,
-				D = 0x0C00UL,
-				E = 0x1000UL,
-				H = 0x1C00UL
+		A = AHB1PERIPH_BASE + 0x0000UL,
+				B = AHB1PERIPH_BASE + 0x0400UL,
+				C = AHB1PERIPH_BASE + 0x0800UL,
+				D = AHB1PERIPH_BASE + 0x0C00UL,
+				E = AHB1PERIPH_BASE + 0x1000UL,
+				H = AHB1PERIPH_BASE + 0x1C00UL
 	};
 
-	enum class RCC_AHB1
+	enum class RCCEnableAhb1PeripheralClockFor
 	{
-		PortA = 0U,
+		PortA = RCC_AHB1ENR_GPIOAEN_Pos,
 				PortB = 1U,
 				PortC = 2U,
 				PortD = 3U,
@@ -88,7 +88,7 @@ public:
 	};
 
 	F4xxx();
-	void enableAHB1(RCC_AHB1 hardware);
+	void enableAHB1(RCCEnableAhb1PeripheralClockFor hardware);
 	void setPinMode(Port port, PortMode mode, unsigned int pin);
 	void setPinHigh(Port port, unsigned pin);
 	void setPinLow(Port port, unsigned pin);

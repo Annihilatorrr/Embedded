@@ -71,8 +71,8 @@ void delay()
 void ledBlinking()
 {
 	F4xxx f4;
-	f4.clockInit(8, 336, 4, 7);
-	f4.enableAHB1(F4xxx::RCC_AHB1::PortA);
+	//f4.clockInit(8, 336, 4, 7);
+	f4.enableAHB1(F4xxx::RCCEnableAhb1PeripheralClockFor::PortA);
 	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
 
 	volatile int i;
@@ -87,9 +87,13 @@ void ledBlinking()
 	}
 }
 
-#define TIMx_CLK                8000000UL // Hz
-#define TIMx_Internal_Frequency 1000UL     // Hz
-#define TIMx_Out_Frequency      100UL        // Hz
+//#define TIMx_CLK                16000000UL // Hz
+//#define TIMx_Internal_Frequency 1000UL     // Hz
+//#define TIMx_Out_Frequency      1UL        // Hz
+
+#define TIMx_CLK                48000000UL // Hz
+#define TIMx_Internal_Frequency 16000000UL     // Hz
+#define TIMx_Out_Frequency      1UL        // Hz
 
 #define Prescaler (TIMx_CLK /TIMx_Internal_Frequency)-1UL
 #define Period (TIMx_Internal_Frequency/TIMx_Out_Frequency)-1UL
@@ -98,11 +102,11 @@ void initTimer()
 {
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-	TIM2->PSC = Prescaler;
-	TIM2->ARR = Period; // the reload value of the timer counter
+	TIM2->PSC = 0;
+	TIM2->ARR = 0; // the reload value of the timer counter
 
 	TIM2->DIER |= TIM_DIER_UIE;
-	TIM2->CR1|=TIM_CR1_CEN;
+	TIM2->CR1 |= TIM_CR1_CEN;
 	NVIC_SetPriority(TIM2_IRQn,0);
 	NVIC_EnableIRQ(TIM2_IRQn);
 }
@@ -113,7 +117,9 @@ extern "C" void TIM2_IRQHandler(void) {
 	if(TIM2->SR & TIM_SR_UIF) {
 
 		GPIOA->ODR ^= (0x1UL << 5);
+		GPIOA->ODR ^= (0x1UL << 5);
 		TIM2->SR = ~TIM_SR_UIF;
+		//TIM2->SR = ~TIM_SR_UIF;
 		//Clears flag.
 		//TIM2->SR &= ~TIM_SR_UIF;
 	}
@@ -122,13 +128,14 @@ extern "C" void TIM2_IRQHandler(void) {
 int main(void)
 {
 	__enable_irq();
-	F4xxx f4;
+	//F4xxx f4;
 
 	//f4.clockInit(8, 336, 4, 7);
-	f4.enableAHB1(F4xxx::RCC_AHB1::PortA);
-	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
-	//ledBlinking();
-	initTimer();
+	//f4.enableAHB1(F4xxx::RCCEnableAhb1PeripheralClockFor::PortA);
+	//f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
+	//f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 6);
+	ledBlinking();
+	//initTimer();
 	while(true)
 	{
 
