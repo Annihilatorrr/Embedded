@@ -102,8 +102,8 @@ void initTimer()
 {
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-    TIM2->PSC = Prescaler;
-    TIM2->ARR = Period; // the reload value of the timer counter
+    TIM2->PSC = 0;
+    TIM2->ARR = 1000; // the reload value of the timer counter
 
     TIM2->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
 
@@ -143,8 +143,8 @@ int main(void)
 {
 	__enable_irq();
 	F4xxx f4;
-
-	//f4.clockInit(8, 336, 4, 7);
+	// m 8; n 336; p 4; q 7
+	f4.clockInit(8, 336, 4, 7);
 	f4.enableAHB1(F4xxx::RCCEnableAhb1PeripheralClockFor::PortA);
 	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
 	f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 1);
