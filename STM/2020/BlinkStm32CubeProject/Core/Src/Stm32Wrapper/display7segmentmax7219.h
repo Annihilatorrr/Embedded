@@ -26,17 +26,17 @@ class Display7SegmentMax7219
 {
 	SPI m_spi;
 
+	void sendByte(uint8_t data)
+	{
+        SPI1->DR = data;
+        while(!(SPI1->SR & SPI_SR_TXE));// make sure TX buffer is empty
+        while(SPI1->SR & SPI_SR_BSY);         // make sure SPI isn't busy
+	}
     void sendCommand(uint8_t address, uint8_t command)
     {
         GPIOA->ODR &= ~GPIO_ODR_ODR_4;    // chip select
-        SPI1->DR = address;
-        while(!(SPI1->SR & SPI_SR_TXE));// make sure TX buffer is empty
-        while(SPI1->SR & SPI_SR_BSY);         // make sure SPI isn't busy
-
-        SPI1->DR = command;
-        while(!(SPI1->SR & SPI_SR_TXE));      // make sure TX buffer is empty
-        while(SPI1->SR & SPI_SR_BSY);         // make sure SPI isn't busy
-
+        sendByte(address);
+        sendByte(command);
         GPIOA->ODR |= GPIO_ODR_ODR_4;              // deselect
     }
 
