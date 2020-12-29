@@ -12,6 +12,7 @@
 #include "stm32f4xx_hal.h"
 
 class F4xxx {
+	void enableHsi();
 	void enableHse();
 
 	uint32_t m_gpioModerPositions[16]
