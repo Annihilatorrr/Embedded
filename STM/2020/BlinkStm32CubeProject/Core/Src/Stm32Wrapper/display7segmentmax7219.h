@@ -21,29 +21,15 @@
 
 #include <stdlib.h>
 #include "spi.h"
-
-class Display7SegmentMax7219
+#include "max7219base.h"
+class Display7SegmentMax7219: public Max7219Base
 {
-	SPI m_spi;
 
-	void sendByte(uint8_t data)
-	{
-        SPI1->DR = data;
-        while(!(SPI1->SR & SPI_SR_TXE));// make sure TX buffer is empty
-        while(SPI1->SR & SPI_SR_BSY);         // make sure SPI isn't busy
-	}
-    void sendCommand(uint8_t address, uint8_t command)
-    {
-        GPIOA->ODR &= ~GPIO_ODR_ODR_4;    // chip select
-        sendByte(address);
-        sendByte(command);
-        GPIOA->ODR |= GPIO_ODR_ODR_4;              // deselect
-    }
 
 public:
 	Display7SegmentMax7219()
 	{
-		m_spi.init();
+
 	}
 
 	void shutDownOn()

@@ -22,6 +22,7 @@
 #include "main.h"
 #include "Stm32Wrapper/f4xxx.h"
 #include "Stm32Wrapper/display7segmentmax7219.h"
+#include "Stm32Wrapper/ledmatrixmax7219.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -66,7 +67,7 @@ void SystemClock_Config(void);
 void delay()
 {
 	volatile int i;
-	for( i=0; i<1000000; ++i );
+	for( i=0; i<100000; ++i );
 }
 
 void ledBlinking()
@@ -160,16 +161,18 @@ int main(void)
 	//ledBlinking();
 	//initTimer();
 
-	Display7SegmentMax7219 m_display;
-	m_display.shutDownOn();
-	m_display.clear(8);
-	m_display.setVisibleDigits(3);
-	m_display.setNoDecodeAllDigits();
-	for (int i = 0 ; i < 10000; ++i)
-	{
-		m_display.displayInt64Number(i, true);
-		delay();
-	}
+	LedMatrixMax7219 matrix;
+	matrix.maxInit(3);
+	//Display7SegmentMax7219 m_display;
+	//m_display.shutDownOn();
+	//m_display.clear(8);
+	//m_display.setVisibleDigits(3);
+	//m_display.setNoDecodeAllDigits();
+	//for (int i = 0 ; i < 10000; ++i)
+	//{
+	//	m_display.displayInt64Number(i, true);
+//		delay();
+//	}
 
 
 	while(true)

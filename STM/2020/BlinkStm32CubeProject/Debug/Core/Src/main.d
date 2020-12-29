@@ -26,7 +26,8 @@ Core/Src/main.o: ../Core/Src/main.cpp ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Core/Src/Stm32Wrapper/f4xxx.h \
  ../Core/Src/Stm32Wrapper/display7segmentmax7219.h \
- ../Core/Src/Stm32Wrapper/spi.h
+ ../Core/Src/Stm32Wrapper/spi.h ../Core/Src/Stm32Wrapper/max7219base.h \
+ ../Core/Src/Stm32Wrapper/ledmatrixmax7219.h
 
 ../Core/Inc/main.h:
 
@@ -85,3 +86,7 @@ Core/Src/main.o: ../Core/Src/main.cpp ../Core/Inc/main.h \
 ../Core/Src/Stm32Wrapper/display7segmentmax7219.h:
 
 ../Core/Src/Stm32Wrapper/spi.h:
+
+../Core/Src/Stm32Wrapper/max7219base.h:
+
+../Core/Src/Stm32Wrapper/ledmatrixmax7219.h:
