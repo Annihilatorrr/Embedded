@@ -141,7 +141,8 @@ Character characters[] =
 				{3, {0x08, 0x36, 0x41, 0, 0, 0, 0, 0}},  // 123 - '{'
 				{1, {0x77, 0, 0, 0, 0, 0, 0, 0}},  // 124 - '|'
 				{3, {0x41, 0x36, 0x08, 0, 0, 0, 0, 0}}, // 125 - '}'
-				{5, {0x02, 0x01, 0x02, 0x04, 0x02, 0, 0, 0}}  // 126 - '~'
+				{5, {0x02, 0x01, 0x02, 0x04, 0x02, 0, 0, 0}},  // 126 - '~'
+				{8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}}  // Full fill
 };
 
 void delay();
@@ -327,9 +328,11 @@ void LedMatrixMax7219::maxInit(uint8_t brightness)
 	maxClear ();
 
 	sendCommand(0x0a, brightness);       //  brightness intensity
-	writeChar('Z', 1);
+	//writeChar(127, 1);
+	//shiftLeft();
+	//shiftChar(127, 1, 'L');
 	//drawSmile('2', 0);
-	const char* str{"Happy New Year!!!    2021"};
+	const char* str{"Happy New Year!!!  ** 2021"};
 	scrollString((uint8_t*)str, 1, 'L');
 
 
@@ -351,7 +354,7 @@ void LedMatrixMax7219::writeChar (char c, uint8_t matrixIndex)
 	int width = characters[c].width;
 	int start= (c<<3)+1;
 	int startColumnIndex = 7; // aligned left
-	for (int j = 0; j < 7; j++)
+	for (int j = 0; j < width; j++)
 	{
 		setColumn (startColumnIndex + ((matrixIndex)<<3), characters[c].columns[j]);
 		--startColumnIndex;
@@ -365,17 +368,17 @@ void LedMatrixMax7219::setColumn(uint8_t columnIndexInDisplay, uint8_t value)
 	int matrixRightMostColumnIndex = matrixIndex<<3;
 
 	uint8_t store = value;
-	for (int i=0; i<m_columns; i++)
+	for (int i = 0; i < m_columns; ++i)
 	{
 		if (i != matrixIndex)
 		{
-			sendByte (0);
-			sendByte (0);
+			sendByte(0);
+			sendByte(0);
 		}
 		else
 		{
 			//for (int col=0+(8*n); col<8+(8*n); col++)  // uncomment this if the character looks inverted about X axis
-			for (int col=7 + matrixRightMostColumnIndex; col >= matrixRightMostColumnIndex; --col)
+			for (int col = 7 + matrixRightMostColumnIndex; col >= matrixRightMostColumnIndex; --col)
 			{
 				bool b = value&0x80;
 				setled (columnIndexInMatrix, col, b);
@@ -388,12 +391,12 @@ void LedMatrixMax7219::setColumn(uint8_t columnIndexInDisplay, uint8_t value)
 
 void LedMatrixMax7219::maxClear()
 {
-	int totalColumns = m_columns<<3;
-	for (int i = 0; i < totalColumns; i++)
+	int lastIndexOfDisplayColumn = (m_columns << 3) - 1;
+	for (int i = 0; i <= lastIndexOfDisplayColumn; i++)
 	{
-		setColumn(i,0);
+		setColumn(i, 0);
 	}
-	for (int i=0; i<80; i++)
+	for (int i = 0; i < 80; ++i)
 	{
 		buffer[i] = 0;
 		buffer_row[i] = 0;
@@ -402,14 +405,13 @@ void LedMatrixMax7219::maxClear()
 
 void LedMatrixMax7219::shiftLeft()
 {
-	int last = (m_columns<<3)-1;
-	uint8_t old = buffer_row[last];
-	int i;
-	for (i=0; i<=last; i++)
+	int lastIndexOfDisplayColumn = (m_columns << 3) - 1;
+	uint8_t old = buffer_row[lastIndexOfDisplayColumn];
+	for (int i = 0; i <= lastIndexOfDisplayColumn; ++i)
 	{
 		setColumn(i, buffer_row[i]);
 	}
-	for (i=79; i>0; i--)
+	for (int i = 79; i > 0; --i)
 	{
 		buffer_row[i] = buffer_row[i-1];
 	}
@@ -420,42 +422,42 @@ void LedMatrixMax7219::shiftLeft()
 
 void LedMatrixMax7219::shiftRight()
 {
-	int last = (m_columns<<3)-1;
+	int lastIndexOfDisplayColumn = (m_columns << 3) - 1;
 	uint8_t old = buffer_row[0];
 
-	for (int i=last; i>=0; i--)
+	for (int i = lastIndexOfDisplayColumn; i >= 0; --i)
 	{
 		setColumn (i, buffer_row[i]);
 	}
 
-	for (int i=0; i<80; i++)
+	for (int i = 0; i < 80; ++i)
 	{
 		buffer_row[i] = buffer_row[i+1];
 	}
 
-	buffer_row[last] = old;
+	buffer_row[lastIndexOfDisplayColumn] = old;
 }
 
 void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction)
 {
-	int width = CH[c<<3];
-	int start= (c<<3)+1;
+	int width = characters[c].width;
+	int lastIndexOfDisplayColumn = (m_columns << 3) - 1;
 
 	switch (direction)
 	{
 	case ('L') :
-		for (int j=start; j<(start+width+1); j++)
+		for (int j = 0; j <= width; j++)
 		{
-			setColumn (0, CH[j]);
+			setColumn (0, characters[c].columns[j]);
 			shiftLeft();
 			//delay();
 		}
 	break;
 
 	case ('R') :
-		for (int j=start+width+1; j>=(start); j--)
+		for (int j = width; j >= 0; j--)
 		{
-			setColumn ((m_columns<<3)-1, CH[j]);
+			setColumn (lastIndexOfDisplayColumn, characters[c].columns[j]);
 			shiftRight();
 			//delay();
 		}
