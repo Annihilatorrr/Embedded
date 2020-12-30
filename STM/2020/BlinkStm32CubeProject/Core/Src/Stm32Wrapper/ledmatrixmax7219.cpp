@@ -275,7 +275,7 @@ uint8_t CH[] = {
 		5, 0x02, 0x01, 0x02, 0x04, 0x02, 0, 0,  // 126 - '~'
 };
 
-LedMatrixMax7219::LedMatrixMax7219(int countOfMatrices):m_countOfMatrices(countOfMatrices)
+LedMatrixMax7219::LedMatrixMax7219(int rows, int columns, int matrixSize):m_rows(rows), m_columns(columns), m_matrixSize(matrixSize)
 {
 	// TODO Auto-generated constructor stub
 
@@ -284,7 +284,7 @@ LedMatrixMax7219::LedMatrixMax7219(int countOfMatrices):m_countOfMatrices(countO
 void LedMatrixMax7219::sendCommand(uint8_t address, uint8_t command)
 {
 	GPIOA->ODR &= ~GPIO_ODR_ODR_4;
-	for (int i=0;i<m_countOfMatrices; i++)
+	for (int i=0;i<m_columns; i++)
 	{
 		sendByte(address);
 		sendByte(command);
@@ -300,9 +300,9 @@ void LedMatrixMax7219::setled(uint8_t row, uint8_t col, uint8_t value)
 	int n = col >> 3;
 	int c = col % 8;
 	GPIOA->ODR &= ~GPIO_ODR_ODR_4;
-	for (int i=0; i<m_countOfMatrices; i++)
+	for (int i=0; i<m_columns; i++)
 	{
-		if (i == (m_countOfMatrices-(n+1)))
+		if (i == (m_columns-(n+1)))
 		{
 			sendByte (((c+1)));
 			sendByte (buffer[col]);
@@ -342,7 +342,7 @@ void LedMatrixMax7219::drawSmile (char c, uint8_t matrixIndex)
 	int startColumnIndex = 7; // aligned left
 	for (int j = 0; j < 7; j++)
 	{
-		setrow (startColumnIndex + ((matrixIndex)<<3), characters[c].columns[j]);
+		setColumn (startColumnIndex + ((matrixIndex)<<3), characters[c].columns[j]);
 		--startColumnIndex;
 	}
 }
@@ -353,18 +353,18 @@ void LedMatrixMax7219::writeChar (char c, uint8_t matrixIndex)
 	int startColumnIndex = 7; // aligned left
 	for (int j = 0; j < 7; j++)
 	{
-		setrow (startColumnIndex + ((matrixIndex)<<3), characters[c].columns[j]);
+		setColumn (startColumnIndex + ((matrixIndex)<<3), characters[c].columns[j]);
 		--startColumnIndex;
 	}
 }
-void LedMatrixMax7219::setrow(uint8_t row, uint8_t value)
+void LedMatrixMax7219::setColumn(uint8_t row, uint8_t value)
 {
 	int n = row >> 3;
 	int r = row % 8;
 
 	int nShiftleft= n<<3;
 	uint8_t store = value;
-	for (int i=0; i<m_countOfMatrices; i++)
+	for (int i=0; i<m_columns; i++)
 	{
 		if (i == ((n)))
 		{
@@ -387,10 +387,10 @@ void LedMatrixMax7219::setrow(uint8_t row, uint8_t value)
 
 void LedMatrixMax7219::maxClear()
 {
-	int totalColumns = m_countOfMatrices<<3;
+	int totalColumns = m_columns<<3;
 	for (int i = 0; i < totalColumns; i++)
 	{
-		setrow(i,0);
+		setColumn(i,0);
 	}
 	for (int i=0; i<80; i++)
 	{
@@ -401,12 +401,12 @@ void LedMatrixMax7219::maxClear()
 
 void LedMatrixMax7219::shiftLeft()
 {
-	int last = (m_countOfMatrices<<3)-1;
+	int last = (m_columns<<3)-1;
 	uint8_t old = buffer_row[last];
 	int i;
 	for (i=0; i<=last; i++)
 	{
-		setrow(i, buffer_row[i]);
+		setColumn(i, buffer_row[i]);
 	}
 	for (i=79; i>0; i--)
 	{
@@ -419,12 +419,12 @@ void LedMatrixMax7219::shiftLeft()
 
 void LedMatrixMax7219::shiftRight()
 {
-	int last = (m_countOfMatrices<<3)-1;
+	int last = (m_columns<<3)-1;
 	uint8_t old = buffer_row[0];
 
 	for (int i=last; i>=0; i--)
 	{
-		setrow (i, buffer_row[i]);
+		setColumn (i, buffer_row[i]);
 	}
 
 	for (int i=0; i<80; i++)
@@ -445,7 +445,7 @@ void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction)
 	case ('L') :
 		for (int j=start; j<(start+width+1); j++)
 		{
-			setrow (0, CH[j]);
+			setColumn (0, CH[j]);
 			shiftLeft();
 			//delay();
 		}
@@ -454,7 +454,7 @@ void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction)
 	case ('R') :
 		for (int j=start+width+1; j>=(start); j--)
 		{
-			setrow ((m_countOfMatrices<<3)-1, CH[j]);
+			setColumn ((m_columns<<3)-1, CH[j]);
 			shiftRight();
 			//delay();
 		}

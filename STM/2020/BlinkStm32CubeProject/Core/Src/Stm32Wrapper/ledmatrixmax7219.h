@@ -19,14 +19,16 @@ class LedMatrixMax7219: public Max7219Base
 {
 	uint8_t buffer[80]{};
 	uint8_t buffer_row[80]{};
-	int m_countOfMatrices{};
+	int m_rows{};
+	int m_columns{};
+	int m_matrixSize{};
 public:
-	LedMatrixMax7219(int countOfMatrices);
+	LedMatrixMax7219(int rows, int columns, int matrixSize = 8);
 	void sendCommand(uint8_t address, uint8_t command);
 	void setled(uint8_t row, uint8_t col, uint8_t value);
 	void maxInit (uint8_t brightness);
 	void maxClear();
-	void setrow(uint8_t row, uint8_t value);
+	void setColumn(uint8_t row, uint8_t value);
 	void writeChar (char c, uint8_t matrixIndex);
 	void shiftLeft();
 	void shiftRight();
