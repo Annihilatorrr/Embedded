@@ -28,7 +28,7 @@ public:
 	void setled(uint8_t row, uint8_t col, uint8_t value);
 	void maxInit (uint8_t brightness);
 	void maxClear();
-	void setColumn(uint8_t row, uint8_t value);
+	void setColumn(uint8_t columnIndexInDisplay, uint8_t value);
 	void writeChar (char c, uint8_t matrixIndex);
 	void shiftLeft();
 	void shiftRight();

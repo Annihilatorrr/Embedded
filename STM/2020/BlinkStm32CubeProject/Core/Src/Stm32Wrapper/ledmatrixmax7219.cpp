@@ -357,32 +357,33 @@ void LedMatrixMax7219::writeChar (char c, uint8_t matrixIndex)
 		--startColumnIndex;
 	}
 }
-void LedMatrixMax7219::setColumn(uint8_t row, uint8_t value)
+void LedMatrixMax7219::setColumn(uint8_t columnIndexInDisplay, uint8_t value)
 {
-	int n = row >> 3;
-	int r = row % 8;
+	int matrixIndex = columnIndexInDisplay >> 3;
+	int columnIndexInMatrix = columnIndexInDisplay % 8;
 
-	int nShiftleft= n<<3;
+	int matrixRightMostColumnIndex = matrixIndex<<3;
+
 	uint8_t store = value;
 	for (int i=0; i<m_columns; i++)
 	{
-		if (i == ((n)))
+		if (i != matrixIndex)
 		{
-			//for (int col=0+(8*n); col<8+(8*n); col++)  // uncomment this if the character looks inverted about X axis
-			for (int col=(7-0)+nShiftleft; col>=0+nShiftleft; col--)
-			{
-				bool b = value&0x80;
-				setled (r, col, b);
-				value<<=1;
-			}
+			sendByte (0);
+			sendByte (0);
 		}
 		else
 		{
-			sendByte (0);
-			sendByte (0);
+			//for (int col=0+(8*n); col<8+(8*n); col++)  // uncomment this if the character looks inverted about X axis
+			for (int col=7 + matrixRightMostColumnIndex; col >= matrixRightMostColumnIndex; --col)
+			{
+				bool b = value&0x80;
+				setled (columnIndexInMatrix, col, b);
+				value<<=1;
+			}
 		}
 	}
-	buffer_row[row] = store;
+	buffer_row[columnIndexInDisplay] = store;
 }
 
 void LedMatrixMax7219::maxClear()
