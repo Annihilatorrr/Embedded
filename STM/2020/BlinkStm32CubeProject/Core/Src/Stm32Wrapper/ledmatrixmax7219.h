@@ -10,11 +10,6 @@
 
 #include "max7219base.h"
 
-#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
-#define bitSet(value, bit) ((value) |= (1UL << (bit)))
-#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
-#define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
-
 class LedMatrixMax7219: public Max7219Base
 {
 	uint8_t buffer[80]{};
