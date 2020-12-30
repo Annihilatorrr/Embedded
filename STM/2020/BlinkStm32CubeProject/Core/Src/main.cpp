@@ -161,7 +161,7 @@ int main(void)
 	//ledBlinking();
 	//initTimer();
 
-	LedMatrixMax7219 matrix;
+	LedMatrixMax7219 matrix(4);
 	matrix.maxInit(3);
 	//Display7SegmentMax7219 m_display;
 	//m_display.shutDownOn();

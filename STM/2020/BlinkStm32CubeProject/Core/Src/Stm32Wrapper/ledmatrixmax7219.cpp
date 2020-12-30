@@ -138,15 +138,16 @@ uint8_t CH[] = {
 		5, 0x02, 0x01, 0x02, 0x04, 0x02, 0, 0,  // 126 - '~'
 };
 
-LedMatrixMax7219::LedMatrixMax7219() {
+LedMatrixMax7219::LedMatrixMax7219(int countOfMatrices):m_countOfMatrices(countOfMatrices)
+{
 	// TODO Auto-generated constructor stub
 
 }
 
-void LedMatrixMax7219::sendCommand(uint8_t address, uint8_t command, int numOfMatrix)
+void LedMatrixMax7219::sendCommand(uint8_t address, uint8_t command)
 {
 	GPIOA->ODR &= ~GPIO_ODR_ODR_4;
-	for (int i=0;i<numOfMatrix; i++)
+	for (int i=0;i<m_countOfMatrices; i++)
 	{
 		sendByte(address);
 		sendByte(command);
@@ -155,16 +156,16 @@ void LedMatrixMax7219::sendCommand(uint8_t address, uint8_t command, int numOfMa
 	GPIOA->ODR |= GPIO_ODR_ODR_4;
 }
 
-void LedMatrixMax7219::setled(uint8_t row, uint8_t col, uint8_t value, int numOfMatrix)
+void LedMatrixMax7219::setled(uint8_t row, uint8_t col, uint8_t value)
 {
 	bitWrite(buffer[col], row, value);
 
 	int n = col >> 3;
 	int c = col % 8;
 	GPIOA->ODR &= ~GPIO_ODR_ODR_4;
-	for (int i=0; i<numOfMatrix; i++)
+	for (int i=0; i<m_countOfMatrices; i++)
 	{
-		if (i == (numOfMatrix-(n+1)))
+		if (i == (m_countOfMatrices-(n+1)))
 		{
 			sendByte (((c+1)));
 			sendByte (buffer[col]);
@@ -181,23 +182,23 @@ void LedMatrixMax7219::setled(uint8_t row, uint8_t col, uint8_t value, int numOf
 
 void LedMatrixMax7219::maxInit(uint8_t brightness)
 {
-	sendCommand(0x09, 0x00, 4);       //  no decoding
-	sendCommand(0x0b, 0x07, 4);       //  scan limit = 8 LEDs
-	sendCommand(0x0c, 0x01, 4);       //  power down =0,normal mode = 1
-	sendCommand(0x0f, 0x00, 4);       //  no test display
+	sendCommand(0x09, 0x00);       //  no decoding
+	sendCommand(0x0b, 0x07);       //  scan limit = 8 LEDs
+	sendCommand(0x0c, 0x01);       //  power down =0,normal mode = 1
+	sendCommand(0x0f, 0x00);       //  no test display
 
-	maxClear (4);
+	maxClear ();
 
-	sendCommand(0x0a, brightness, 0);       //  brightness intensity
-
-	const char* str{"Happy New Year!!!    2021"};
-	scrollString((uint8_t*)str, 1, 'L', 4);
+	sendCommand(0x0a, brightness);       //  brightness intensity
+	writeChar('.', 0);
+	//const char* str{"Happy New Year!!!    2021"};
+	//scrollString((uint8_t*)str, 1, 'L');
 
 
 }
 
 
-void LedMatrixMax7219::writeChar (char c, uint8_t max)
+void LedMatrixMax7219::writeChar (char c, uint8_t matrixIndex)
 {
 	int width = CH[c<<3];
 	int start= (c<<3)+1;
@@ -205,18 +206,18 @@ void LedMatrixMax7219::writeChar (char c, uint8_t max)
 	for (int j=start; j<(start+width); j++)
 		//	for (int j=start+7; j>=(start); j--)  // uncomment this if the character looks inverted about Y axis
 	{
-		setrow (row+((max-1)<<3), CH[j],4);
+		setrow (row+((matrixIndex)<<3), CH[j]);
 		row--;
 	}
 }
-void LedMatrixMax7219::setrow(uint8_t row, uint8_t value, int numOfMatrix)
+void LedMatrixMax7219::setrow(uint8_t row, uint8_t value)
 {
 	int n = row >> 3;
 	int r = row % 8;
 
 	int nShiftleft= n<<3;
 	uint8_t store = value;
-	for (int i=0; i<numOfMatrix; i++)
+	for (int i=0; i<m_countOfMatrices; i++)
 	{
 		if (i == ((n)))
 		{
@@ -224,7 +225,7 @@ void LedMatrixMax7219::setrow(uint8_t row, uint8_t value, int numOfMatrix)
 			for (int col=(7-0)+nShiftleft; col>=0+nShiftleft; col--)
 			{
 				bool b = value&0x80;
-				setled (r, col, b, numOfMatrix);
+				setled (r, col, b);
 				value<<=1;
 			}
 		}
@@ -237,11 +238,11 @@ void LedMatrixMax7219::setrow(uint8_t row, uint8_t value, int numOfMatrix)
 	buffer_row[row] = store;
 }
 
-void LedMatrixMax7219::maxClear(int numOfMatrix)
+void LedMatrixMax7219::maxClear()
 {
-	int total = numOfMatrix<<3;
+	int total = m_countOfMatrices<<3;
 	for (int i=0; i<total; i++)
-		setrow(i,0,numOfMatrix);
+		setrow(i,0);
 
 	for (int i=0; i<80; i++)
 	{
@@ -250,14 +251,14 @@ void LedMatrixMax7219::maxClear(int numOfMatrix)
 	}
 }
 
-void LedMatrixMax7219::shiftLeft(int numOfMatrix)
+void LedMatrixMax7219::shiftLeft()
 {
-	int last = (numOfMatrix<<3)-1;
+	int last = (m_countOfMatrices<<3)-1;
 	uint8_t old = buffer_row[last];
 	int i;
 	for (i=0; i<=last; i++)
 	{
-		setrow(i, buffer_row[i], numOfMatrix);
+		setrow(i, buffer_row[i]);
 	}
 	for (i=79; i>0; i--)
 	{
@@ -268,14 +269,14 @@ void LedMatrixMax7219::shiftLeft(int numOfMatrix)
 }
 
 
-void LedMatrixMax7219::shiftRight(int numOfMatrix)
+void LedMatrixMax7219::shiftRight()
 {
-	int last = (numOfMatrix<<3)-1;
+	int last = (m_countOfMatrices<<3)-1;
 	uint8_t old = buffer_row[0];
 
 	for (int i=last; i>=0; i--)
 	{
-		setrow (i, buffer_row[i], numOfMatrix);
+		setrow (i, buffer_row[i]);
 	}
 
 	for (int i=0; i<80; i++)
@@ -286,7 +287,7 @@ void LedMatrixMax7219::shiftRight(int numOfMatrix)
 	buffer_row[last] = old;
 }
 
-void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction, int numOfMatrix)
+void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction)
 {
 	int width = CH[c<<3];
 	int start= (c<<3)+1;
@@ -296,8 +297,8 @@ void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction, int nu
 	case ('L') :
 		for (int j=start; j<(start+width+1); j++)
 		{
-			setrow (0, CH[j], numOfMatrix);
-			shiftLeft(4);
+			setrow (0, CH[j]);
+			shiftLeft();
 			//delay();
 		}
 	break;
@@ -305,8 +306,8 @@ void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction, int nu
 	case ('R') :
 		for (int j=start+width+1; j>=(start); j--)
 		{
-			setrow ((numOfMatrix<<3)-1, CH[j], numOfMatrix);
-			shiftRight(4);
+			setrow ((m_countOfMatrices<<3)-1, CH[j]);
+			shiftRight();
 			//delay();
 		}
 	break;
@@ -318,11 +319,11 @@ void LedMatrixMax7219::shiftChar (char c, uint32_t speed, char direction, int nu
 
 
 
-void LedMatrixMax7219::scrollString (uint8_t *string, uint32_t speed, char direction, int numOfMatrix)
+void LedMatrixMax7219::scrollString (uint8_t *string, uint32_t speed, char direction)
 {
 	while (*string != 0)
 	{
-		shiftChar (*string, speed, direction, numOfMatrix);
+		shiftChar (*string, speed, direction);
 		string++;
 	}
 }
