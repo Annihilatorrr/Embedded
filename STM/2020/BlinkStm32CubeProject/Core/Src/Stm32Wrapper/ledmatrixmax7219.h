@@ -32,5 +32,6 @@ public:
 	void shiftRight();
 	void shiftChar (char c, uint32_t speed, char direction);
 	void scrollString (uint8_t *string, uint32_t speed, char direction);
+	void drawSmile (char c, uint8_t matrixIndex);
 };
 #endif /* SRC_STM32WRAPPER_LEDMATRIXMAX7219_H_ */
