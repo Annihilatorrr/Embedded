@@ -67,7 +67,7 @@ void SystemClock_Config(void);
 void delay()
 {
 	volatile int i;
-	for( i=0; i<100000; ++i );
+	for( i=0; i<100; ++i );
 }
 
 void ledBlinking()
@@ -148,9 +148,9 @@ extern "C" void TIM2_IRQHandler(void) {
 int main(void)
 {
 	//__enable_irq();
-	//F4xxx f4;
+	F4xxx f4;
 	// m 8; n 336; p 2; q 7
-	//f4.clockInit(4, 168, 2, 7);
+	f4.clockInit(4, 168, 2, 7);
 	//f4.enableAHB1(F4xxx::RCCEnableAhb1PeripheralClockFor::PortA);
 	//f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Output, 5);
 	//f4.setPinMode(F4xxx::Port::A, F4xxx::PortMode::Alternative, 1);
