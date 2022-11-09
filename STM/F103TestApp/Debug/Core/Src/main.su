@@ -1,0 +1,10 @@
+../Core/Inc/appconfig.h:15:5:AppConfig::AppConfig()	24	static
+../Core/Inc/appconfig.h:21:23:static AppConfig* AppConfig::getInstance()	8	static
+../Core/Inc/appconfig.h:27:9:int AppConfig::getDelay()	16	static
+../Core/Inc/appconfig.h:28:9:int AppConfig::setDelay(int)	16	static
+../Core/Src/main.cpp:57:1:void HAL_GPIO_EXTI_Callback(uint16_t)	16	static
+../Core/Src/main.cpp:77:5:int main()	8	static
+../Core/Src/main.cpp:127:6:void SystemClock_Config()	72	static
+../Core/Src/main.cpp:164:6:void Error_Handler()	4	static,ignoring_inline_asm
+../CommonTools/pins.h:125:46:) [with T = {int}]	16	static
+../CommonTools/pins.h:120:46:) [with T = {int}]	16	static
