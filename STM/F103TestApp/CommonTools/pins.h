@@ -20,7 +20,9 @@ enum Configuration
     Out = 1,
     AltFunc = 2,
     Analog = 3,
-    ItRising = 0x10110000u
+    ItRising = 0x10110000u,
+	ItFalling = 0x10210000u,
+	ItRaisingFalling = 0x10310000u
 };
 
 // Pull mode

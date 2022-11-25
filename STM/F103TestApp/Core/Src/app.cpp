@@ -19,6 +19,8 @@ App::initializePorts ()
     Port<Ports::GPIOc>::configure (Configuration::Out, PullMode::NoPull,
                                    Speed::Fastest, 13, 14, 15);
 
-    Port<Ports::GPIOa>::configure (Configuration::ItRising, PullMode::NoPull,
+    Port<Ports::GPIOa>::configure (Configuration::ItRaisingFalling, PullMode::NoPull,
                                    Speed::Fastest, 0);
+    Port<Ports::GPIOa>::configure (Configuration::ItRaisingFalling, PullMode::NoPull,
+                                   Speed::Fastest, 1);
 }

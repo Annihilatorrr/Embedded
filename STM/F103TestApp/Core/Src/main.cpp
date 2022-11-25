@@ -56,15 +56,40 @@ void SystemClock_Config(void);
 void
 HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 {
-    if (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0) != 0)
-    {
-        static int i = 1;
-        AppConfig::getInstance ().setDelay (
-                AppConfig::getInstance ().getDelay () / 2);
-        ++i;
-    }
-    HAL_NVIC_ClearPendingIRQ (EXTI0_IRQn);
-    HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_0);
+	if (GPIO_Pin == GPIO_PIN_0)
+	{
+		if (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0) != 0)
+		{
+			static int i = 1;
+			AppConfig::getInstance ().setDelay (
+					AppConfig::getInstance ().getDelay () / 2);
+			++i;
+			Port<Ports::GPIOc>::set(14);
+		}
+		else
+		{
+			Port<Ports::GPIOc>::reset(14);
+		}
+
+		HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_0);
+	}
+	else if (GPIO_Pin == GPIO_PIN_1)
+	{
+		if (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_1) != 0)
+		{
+			static int i = 1;
+			AppConfig::getInstance ().setDelay (
+					AppConfig::getInstance ().getDelay () * 2);
+			--i;
+			Port<Ports::GPIOc>::set(14);
+		}
+		else
+		{
+			Port<Ports::GPIOc>::reset(14);
+		}
+
+		HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_1);
+	}
 
 }
 
@@ -103,8 +128,14 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	App::initializePorts();
+
+	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
 	AppConfig::getInstance().setDelay(2000);
 
 	while (1) {
@@ -172,17 +203,17 @@ void Error_Handler(void) {
 
 #ifdef  USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
+	/* USER CODE BEGIN 6 */
+	/* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+	/* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
