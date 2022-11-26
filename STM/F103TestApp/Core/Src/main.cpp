@@ -27,7 +27,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -40,24 +40,25 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
+UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void
-HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
+void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 {
-	if (GPIO_Pin == GPIO_PIN_0)
+	switch (GPIO_Pin)
 	{
+	case GPIO_PIN_0:
 		if (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0) != 0)
 		{
 			static int i = 1;
@@ -72,9 +73,8 @@ HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 		}
 
 		HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_0);
-	}
-	else if (GPIO_Pin == GPIO_PIN_1)
-	{
+		break;
+	case GPIO_PIN_1:
 		if (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_1) != 0)
 		{
 			static int i = 1;
@@ -89,10 +89,10 @@ HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 		}
 
 		HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_1);
+		break;
+
 	}
-
 }
-
 /* USER CODE END 0 */
 
 /**
@@ -128,7 +128,7 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	App::initializePorts();
-
+	MX_USART2_UART_Init();
 	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
@@ -143,7 +143,7 @@ int main(void) {
 		HAL_Delay(AppConfig::getInstance().getDelay());
 		Port<Ports::GPIOc>::reset(13);
 		HAL_Delay(AppConfig::getInstance().getDelay());
-
+		//printf("Hello World\n\r");
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
@@ -184,8 +184,53 @@ void SystemClock_Config(void) {
 	}
 }
 
-/* USER CODE BEGIN 4 */
+/**
+ * @brief USART2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USART2_UART_Init(void)
+{
 
+	/* USER CODE BEGIN USART2_Init 0 */
+
+	/* USER CODE END USART2_Init 0 */
+
+	/* USER CODE BEGIN USART2_Init 1 */
+
+	/* USER CODE END USART2_Init 1 */
+	huart2.Instance = USART2;
+	huart2.Init.BaudRate = 115200;
+	huart2.Init.WordLength = UART_WORDLENGTH_8B;
+	huart2.Init.StopBits = UART_STOPBITS_1;
+	huart2.Init.Parity = UART_PARITY_NONE;
+	huart2.Init.Mode = UART_MODE_TX_RX;
+	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+	if (HAL_UART_Init(&huart2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN USART2_Init 2 */
+
+	/* USER CODE END USART2_Init 2 */
+
+}
+
+/* USER CODE BEGIN 4 */
+/**
+ * @brief  Retargets the C library printf function to the USART.
+ * @param  None
+ * @retval None
+ */
+PUTCHAR_PROTOTYPE
+{
+	/* Place your implementation of fputc here */
+	/* e.g. write a character to the USART1 and Loop until the end of transmission */
+	HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
+
+	return ch;
+}
 /* USER CODE END 4 */
 
 /**
