@@ -11,9 +11,12 @@
 #include "stm32f1xx_hal.h"
 
 class Display7segmentMax7219 {
-	SPI_HandleTypeDef m_spi;
+	SPI_HandleTypeDef& m_spi;
 	uint8_t decodeMode;
 public:
+
+
+	static uint8_t SYMBOLS[16];
 
 	enum class Registers
 	{
@@ -57,10 +60,21 @@ public:
 		BLANK		= 0x0F
 	};
 
-	Display7segmentMax7219(SPI_HandleTypeDef spi);
+	Display7segmentMax7219(SPI_HandleTypeDef& spi):m_spi(spi){}
+
 	void init(uint8_t intensivity);
-	void SendData(uint8_t reg, uint8_t value);
+	void printDigit(int position, Letters numeric, bool point);
+	void sendData(uint8_t reg, uint8_t value);
 	void clean(void);
+	void clearDigit(uint8_t digit);
+	void turnOn(void);
+	void turnOff(void);
+	void setDecodeMode(void);
+	void resetDecodeMode(void);
+	void setIntensity(uint8_t intensivity);
+	int print(int position, float value, uint8_t n);
+	int printNtos(int position, uint32_t value, uint8_t n);
+	int printItos(int position, int value);
 	virtual ~Display7segmentMax7219();
 };
 

@@ -22,7 +22,8 @@
 /* USER CODE BEGIN Includes */
 #include "app.h"
 #include "appconfig.h"
-#include "CommonTools/pins.h"
+#include "../CommonTools/pins.h"
+#include "../CommonTools/display7segmentmax7219.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -213,8 +214,16 @@ int main(void) {
 	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-	AppConfig::getInstance().setDelay(200);
-	Init_7219(3);
+	AppConfig::getInstance().setDelay(1000);
+	//Init_7219(7);
+	Display7segmentMax7219 display(hspi1);
+	display.init(4);
+//	display.printItos(4, 567890);
+//	display.printItos(5, 567890);
+//	display.printItos(6, 567890);
+	display.printItos(7, 567890);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	//display.printItos(8, 567890);
 	while (1) {
 		Port<Ports::GPIOc>::set(13);
 		Send_7219(1, 0x01);//1

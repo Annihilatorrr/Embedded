@@ -6,7 +6,7 @@
  */
 
 #include "app.h"
-#include "CommonTools/pins.h"
+#include "../CommonTools/pins.h"
 void
 App::initializePorts ()
 {
