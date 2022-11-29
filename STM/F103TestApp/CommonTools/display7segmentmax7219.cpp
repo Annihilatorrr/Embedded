@@ -42,13 +42,6 @@ static uint32_t lcdPow10(uint8_t n)
 	return retval;
 }
 
-//Display7segmentMax7219::Display7segmentMax7219(void* spi)
-////		m_spi((__SPI_HandleTypeDef*)spi)
-//{
-//	// TODO Auto-generated constructor stub
-//
-//}
-
 Display7segmentMax7219::~Display7segmentMax7219() {
 	// TODO Auto-generated destructor stub
 }
@@ -97,9 +90,9 @@ void Display7segmentMax7219::clean(void){
 void Display7segmentMax7219::sendData(uint8_t reg, uint8_t value)
 {
 	uint8_t tx_data[2] = { reg, value };
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(m_spiPort, m_spiPin, GPIO_PIN_RESET);
 	HAL_SPI_Transmit(&m_spi, tx_data, 2, 100);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(m_spiPort, m_spiPin, GPIO_PIN_SET);
 }
 
 void Display7segmentMax7219::printDigit(int position, Letters numeric, bool point)
@@ -215,7 +208,9 @@ int Display7segmentMax7219::printItos(int position, int value)
 		clearDigit(trailingSpacesCount);
 		--trailingSpacesCount;
 	}
-//	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
+
+	// set back initial decode mode
+	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
 
 
 	return length;
