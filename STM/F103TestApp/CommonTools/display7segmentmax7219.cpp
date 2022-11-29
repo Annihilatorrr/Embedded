@@ -54,6 +54,7 @@ Display7segmentMax7219::~Display7segmentMax7219() {
 }
 
 void Display7segmentMax7219::init(uint8_t intensity){
+	turnOn();
 	sendData(static_cast<uint8_t>(Registers::REG_DISPLAY_TEST), 0);//disokay test
 	setDecodeMode();//включим режим декодирования
 	sendData(static_cast<uint8_t>(Registers::REG_SCAN_LIMIT), numberOfDigits - 1);
@@ -190,7 +191,6 @@ int Display7segmentMax7219::printItos(int position, int value)
 		tempValue /= 10;
 		++numberOfDigits;
 	}
-	length += numberOfDigits;
 
 	int rightCursor = position - numberOfDigits + 1;
 
@@ -206,13 +206,15 @@ int Display7segmentMax7219::printItos(int position, int value)
 		if (rightCursor >= 0)
 		{
 			sendData(rightCursor, digit);
+			++length;
 		}
 		++rightCursor;
 	}
-//	while(trailingSpacesCount-->0)
-//	{
-//		clearDigit(trailingSpacesCount);
-//	}
+	while(trailingSpacesCount>0)
+	{
+		clearDigit(trailingSpacesCount);
+		--trailingSpacesCount;
+	}
 //	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
 
 

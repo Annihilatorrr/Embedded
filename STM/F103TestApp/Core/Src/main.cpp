@@ -219,9 +219,12 @@ int main(void) {
 	Display7segmentMax7219 display(hspi1);
 	display.init(4);
 //	display.printItos(4, 567890);
-//	display.printItos(5, 567890);
-//	display.printItos(6, 567890);
+	display.printItos(5, 567890);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.printItos(6, 567890);
+	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.printItos(7, 567890);
+	HAL_Delay(AppConfig::getInstance().getDelay());
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	//display.printItos(8, 567890);
 	while (1) {
