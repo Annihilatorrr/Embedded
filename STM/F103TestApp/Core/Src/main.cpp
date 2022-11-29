@@ -32,6 +32,22 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+typedef enum {
+	DIGIT_0 = 0x1,
+	DIGIT_1 = 0x2,
+	DIGIT_2 = 0x3,
+	DIGIT_3 = 0x4,
+	DIGIT_4 = 0x5,
+	DIGIT_5 = 0x6,
+	DIGIT_6 = 0x7,
+	DIGIT_7 = 0x8,
+
+	DECODE_MODE = 0x9,
+	INTENSITY   = 0xA,
+	SCAN_LIMIT  = 0xB,
+	SHUTDOWN    = 0xC,
+	DISPLAY_TEST= 0xF
+} MAX7219_COMMAND;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -40,7 +56,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef huart2;
+
+SPI_HandleTypeDef hspi1;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -48,6 +65,8 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_USART2_UART_Init(void);
+static void MX_SPI1_Init(void);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -93,18 +112,76 @@ void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 
 	}
 }
+
+void Send_7219(uint8_t reg, uint8_t value)
+{
+	uint8_t tx_data[2] = { reg, value };
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, tx_data, 2, 100);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+	//	HAL_Delay(1);
+}
+
+void Clear_7219 (char dg)
+{
+	uint8_t i = dg;
+	do
+	{
+		Send_7219(i,0x0);
+	} while (--i);
+}
+
+void Number_7219(long n, char dg)
+{
+	uint8_t ng=0;//переменная для минуса
+	if(n<0)
+	{
+		ng=1;
+		n*=-1;
+	}
+	Clear_7219(dg);
+	if(n==0)
+	{
+		Send_7219(0x01,0);//в первый разряд напишем 0
+		return;
+	}
+	uint8_t i=0;
+	do
+	{
+		Send_7219(++i,n%10);
+		n/=10;
+	} while (n);
+	if (ng)
+	{
+		Send_7219(i+1,0xA);//символ —
+	}
+}
+
+void Init_7219(char dg)
+{
+	Send_7219(DISPLAY_TEST,0);//disokay test
+	Send_7219(DECODE_MODE,0b1111);//включим режим декодирования
+	Send_7219(SCAN_LIMIT,dg-1);//кол-во используемых разрядов
+	Send_7219(INTENSITY,32);//интенсивность свечения
+
+	Send_7219(SHUTDOWN,0x01);//включим индикатор
+	Clear_7219(dg);
+}
+
 /* USER CODE END 0 */
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
+
 int main(void) {
 	/* USER CODE BEGIN 1 */
 
 	/* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
+
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -128,7 +205,7 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	App::initializePorts();
-	MX_USART2_UART_Init();
+	MX_SPI1_Init();
 	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
@@ -136,12 +213,14 @@ int main(void) {
 	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-	AppConfig::getInstance().setDelay(2000);
-
+	AppConfig::getInstance().setDelay(200);
+	Init_7219(3);
 	while (1) {
 		Port<Ports::GPIOc>::set(13);
+		Send_7219(1, 0x01);//1
 		HAL_Delay(AppConfig::getInstance().getDelay());
 		Port<Ports::GPIOc>::reset(13);
+		Send_7219(2, 0x02);//2
 		HAL_Delay(AppConfig::getInstance().getDelay());
 		//printf("Hello World\n\r");
 		/* USER CODE END WHILE */
@@ -184,53 +263,39 @@ void SystemClock_Config(void) {
 	}
 }
 
-/**
- * @brief USART2 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_USART2_UART_Init(void)
+static void MX_SPI1_Init(void)
 {
 
-	/* USER CODE BEGIN USART2_Init 0 */
+	/* USER CODE BEGIN SPI1_Init 0 */
 
-	/* USER CODE END USART2_Init 0 */
+	/* USER CODE END SPI1_Init 0 */
 
-	/* USER CODE BEGIN USART2_Init 1 */
+	/* USER CODE BEGIN SPI1_Init 1 */
 
-	/* USER CODE END USART2_Init 1 */
-	huart2.Instance = USART2;
-	huart2.Init.BaudRate = 115200;
-	huart2.Init.WordLength = UART_WORDLENGTH_8B;
-	huart2.Init.StopBits = UART_STOPBITS_1;
-	huart2.Init.Parity = UART_PARITY_NONE;
-	huart2.Init.Mode = UART_MODE_TX_RX;
-	huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-	if (HAL_UART_Init(&huart2) != HAL_OK)
+	/* USER CODE END SPI1_Init 1 */
+	/* SPI1 parameter configuration*/
+	hspi1.Instance = SPI1;
+	hspi1.Init.Mode = SPI_MODE_MASTER;
+	hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+	hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+	hspi1.Init.NSS = SPI_NSS_SOFT;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+	hspi1.Init.CRCPolynomial = 10;
+	if (HAL_SPI_Init(&hspi1) != HAL_OK)
 	{
 		Error_Handler();
 	}
-	/* USER CODE BEGIN USART2_Init 2 */
+	/* USER CODE BEGIN SPI1_Init 2 */
 
-	/* USER CODE END USART2_Init 2 */
+	/* USER CODE END SPI1_Init 2 */
 
 }
 
-/* USER CODE BEGIN 4 */
-/**
- * @brief  Retargets the C library printf function to the USART.
- * @param  None
- * @retval None
- */
-PUTCHAR_PROTOTYPE
-{
-	/* Place your implementation of fputc here */
-	/* e.g. write a character to the USART1 and Loop until the end of transmission */
-	HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
-
-	return ch;
-}
 /* USER CODE END 4 */
 
 /**

@@ -60,6 +60,9 @@ void Error_Handler(void);
 #define OnClickPA0_Pin GPIO_PIN_0
 #define OnClickPA0_GPIO_Port GPIOA
 #define OnClickPA0_EXTI_IRQn EXTI0_IRQn
+#define OnClickPA1_Pin GPIO_PIN_1
+#define OnClickPA1_GPIO_Port GPIOA
+#define OnClickPA1_EXTI_IRQn EXTI1_IRQn
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
