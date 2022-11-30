@@ -191,6 +191,22 @@ int main(void) {
 	Display7segmentMax7219 display(hspi1, GPIOA, GPIO_PIN_4);
 	display.init(14, 8);
 
+	display.print(0.1234f, 4);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(50.0f, 4);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(0.0f, 4);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(0);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
 	display.print(-53.1234f, 4);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
@@ -207,19 +223,15 @@ int main(void) {
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(567890, 5);
-	HAL_Delay(AppConfig::getInstance().getDelay());
-	display.clean();
-
-	display.print(567890, 6);
-	HAL_Delay(AppConfig::getInstance().getDelay());
-	display.clean();
-
-	display.print(567890, 7);
-	HAL_Delay(AppConfig::getInstance().getDelay());
-	display.clean();
-
 	display.print(567890);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-0.0f, 1);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-0.12f, 2);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 

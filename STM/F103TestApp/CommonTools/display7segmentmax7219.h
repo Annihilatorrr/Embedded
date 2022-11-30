@@ -19,6 +19,10 @@ class Display7segmentMax7219 {
 	uint8_t getLengthInDigits(int value)
 	{
 		uint8_t numberOfDigits{};
+		if (value == 0)
+		{
+			numberOfDigits = 1;
+		}
 		while (value != 0)
 		{
 			value /= 10;
@@ -104,7 +108,7 @@ public:
 	int print(float value, uint8_t digitsAfterPoint);
 	int print(float value, uint8_t digitsAfterPoint, int position);
 	int print(int value);
-	int print(int value, uint8_t position, bool withPoint = false);
+	int print(int value, uint8_t position, bool asDecimalart, bool withPoint = false);
 	virtual ~Display7segmentMax7219();
 };
 

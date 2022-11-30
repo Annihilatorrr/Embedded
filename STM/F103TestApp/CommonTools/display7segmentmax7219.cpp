@@ -120,7 +120,8 @@ void Display7segmentMax7219::printDigit(int position, Letters numeric, bool poin
 
 int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint)
 {
-	return print(value, digitsAfterPoint, m_maxDigits);
+	int32_t numberOfDigits{getLengthInDigits(value)+digitsAfterPoint+int(value < 0)};
+	return print(value, digitsAfterPoint, numberOfDigits);
 }
 
 int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint, int position)
@@ -143,11 +144,12 @@ int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint, int pos
 		value = -value;
 	}
 
-	position -= print(static_cast<int>(value), position, digitsAfterPoint>0);
 	int decimal = (value - static_cast<int>(value))*getPow10n(digitsAfterPoint);
+	position -= print(static_cast<int>(value), position, false, decimal !=0 && digitsAfterPoint>0);
+
 	if (digitsAfterPoint > 0u)
 	{
-		print(decimal, position);
+		print(decimal, position, true, false);
 	}
 
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
@@ -157,9 +159,10 @@ int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint, int pos
 
 int Display7segmentMax7219::print(int value)
 {
-	return print(value, m_maxDigits, false);
+	int32_t numberOfDigits{getLengthInDigits(value)+int(value < 0)};
+	return print(value, numberOfDigits, false, false);
 }
-int Display7segmentMax7219::print(int value, uint8_t position, bool withPoint)
+int Display7segmentMax7219::print(int value, uint8_t position, bool asDecimalPart, bool withPoint)
 {
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), 0xFF);
 
@@ -183,6 +186,11 @@ int Display7segmentMax7219::print(int value, uint8_t position, bool withPoint)
 
 	int tempValue = value;
 	int lastIntDigit{tempValue%10};
+	if (tempValue == 0 && !asDecimalPart)
+	{
+		sendData(rightCursor, 0);
+		++length;
+	}
 	while (tempValue != 0)
 	{
 		int digit = tempValue % 10;
