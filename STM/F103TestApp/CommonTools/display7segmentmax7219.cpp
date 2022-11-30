@@ -121,6 +121,7 @@ void Display7segmentMax7219::printDigit(int position, Letters numeric, bool poin
 int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint)
 {
 	int32_t numberOfDigits{getLengthInDigits(value)+digitsAfterPoint+int(value < 0)};
+	setZeros(numberOfDigits);
 	return print(value, digitsAfterPoint, numberOfDigits);
 }
 
@@ -145,11 +146,15 @@ int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint, int pos
 	}
 
 	int decimal = (value - static_cast<int>(value))*getPow10n(digitsAfterPoint);
-	position -= print(static_cast<int>(value), position, false, decimal !=0 && digitsAfterPoint>0);
+	position -= print(static_cast<int>(value), position, false, decimal !=0 || digitsAfterPoint>0);
 
-	if (digitsAfterPoint > 0u)
+
+	auto firstDecimalPosition = position + 1;
+	while(position)
 	{
-		print(decimal, position, true, false);
+		auto v = int(value*getPow10n(firstDecimalPosition - position))%10;
+		sendData(position, v);
+		--position;
 	}
 
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
@@ -160,7 +165,13 @@ int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint, int pos
 int Display7segmentMax7219::print(int value)
 {
 	int32_t numberOfDigits{getLengthInDigits(value)+int(value < 0)};
+	setZeros(numberOfDigits);
 	return print(value, numberOfDigits, false, false);
+}
+
+int Display7segmentMax7219::print(int value, uint8_t position)
+{
+	return print(value, position, false, false);
 }
 int Display7segmentMax7219::print(int value, uint8_t position, bool asDecimalPart, bool withPoint)
 {
@@ -182,14 +193,21 @@ int Display7segmentMax7219::print(int value, uint8_t position, bool asDecimalPar
 
 	int rightCursor = position - numberOfDigits + 1;
 
-	int trailingSpacesCount = position - numberOfDigits;
+	//int trailingSpacesCount = position - numberOfDigits;
 
 	int tempValue = value;
 	int lastIntDigit{tempValue%10};
-	if (tempValue == 0 && !asDecimalPart)
+	if (tempValue == 0)
 	{
-		sendData(rightCursor, 0);
-		++length;
+		if (!asDecimalPart)
+		{
+			sendData(rightCursor, 0);
+			++length;
+		}
+		else
+		{
+
+		}
 	}
 	while (tempValue != 0)
 	{
@@ -203,11 +221,11 @@ int Display7segmentMax7219::print(int value, uint8_t position, bool asDecimalPar
 		}
 		++rightCursor;
 	}
-	while(trailingSpacesCount>0)
-	{
-		clearDigit(trailingSpacesCount);
-		--trailingSpacesCount;
-	}
+//	while(trailingSpacesCount>0)
+//	{
+//		clearDigit(trailingSpacesCount);
+//		--trailingSpacesCount;
+//	}
 	if(withPoint)
 	{
 		if(decodeMode == 0x00)

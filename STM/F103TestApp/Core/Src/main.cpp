@@ -186,52 +186,80 @@ int main(void) {
 	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-	AppConfig::getInstance().setDelay(2000);
+	AppConfig::getInstance().setDelay(1000);
 	//Init_7219(7);
 	Display7segmentMax7219 display(hspi1, GPIOA, GPIO_PIN_4);
 	display.init(14, 8);
 
-	display.print(0.1234f, 4);
+	display.print(1);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(50.0f, 4);
+	display.print(10);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(0.0f, 4);
+	display.print(11, 3);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(0);
+	display.print(-1);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(-53.1234f, 4);
+	display.print(-10);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(-53.1234f, 3);
+	display.print(-11, 4);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(-53.1234f, 0);
+	display.print(12.34f, 1);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(53.1234f, 0);
+	display.print(12.34f, 2);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(567890);
+	display.print(12.0f, 2);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(-0.0f, 1);
+	display.print(12.0f, 0);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 
-	display.print(-0.12f, 2);
+	display.print(0.05f, 2);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(0.05f, 3);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-12.34f, 1);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-12.34f, 2);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-12.0f, 2);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-12.0f, 0);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-0.05f, 2);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(-0.05f, 3);
 	HAL_Delay(AppConfig::getInstance().getDelay());
 	display.clean();
 

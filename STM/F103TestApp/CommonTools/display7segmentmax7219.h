@@ -31,6 +31,15 @@ class Display7segmentMax7219 {
 		return numberOfDigits;
 	}
 
+	void setZeros(uint8_t digits)
+	{
+		uint8_t clear = decodeMode == 0xFF ? static_cast<uint8_t>(Display7segmentMax7219::Letters::NUM_0) : 0x00;
+
+		for (int i = 0; i < digits;++i)
+		{
+			sendData(i, clear);
+		}
+	}
 //	uint8_t getLengthInDigits(float value)
 //	{
 //		uint8_t numberOfIntPartDigits{getLengthInDigits(static_cast<uint8_t>(value))};
@@ -108,6 +117,7 @@ public:
 	int print(float value, uint8_t digitsAfterPoint);
 	int print(float value, uint8_t digitsAfterPoint, int position);
 	int print(int value);
+	int print(int value, uint8_t position);
 	int print(int value, uint8_t position, bool asDecimalart, bool withPoint = false);
 	virtual ~Display7segmentMax7219();
 };
