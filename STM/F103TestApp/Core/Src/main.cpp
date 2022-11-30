@@ -114,60 +114,32 @@ void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
 	}
 }
 
-void Send_7219(uint8_t reg, uint8_t value)
-{
-	uint8_t tx_data[2] = { reg, value };
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&hspi1, tx_data, 2, 100);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-	//	HAL_Delay(1);
-}
+//void Number_7219(long n, char dg)
+//{
+//	uint8_t ng=0;//переменная для минуса
+//	if(n<0)
+//	{
+//		ng=1;
+//		n*=-1;
+//	}
+//	Clear_7219(dg);
+//	if(n==0)
+//	{
+//		Send_7219(0x01,0);//в первый разряд напишем 0
+//		return;
+//	}
+//	uint8_t i=0;
+//	do
+//	{
+//		Send_7219(++i,n%10);
+//		n/=10;
+//	} while (n);
+//	if (ng)
+//	{
+//		Send_7219(i+1,0xA);//символ —
+//	}
+//}
 
-void Clear_7219 (char dg)
-{
-	uint8_t i = dg;
-	do
-	{
-		Send_7219(i,0x0);
-	} while (--i);
-}
-
-void Number_7219(long n, char dg)
-{
-	uint8_t ng=0;//переменная для минуса
-	if(n<0)
-	{
-		ng=1;
-		n*=-1;
-	}
-	Clear_7219(dg);
-	if(n==0)
-	{
-		Send_7219(0x01,0);//в первый разряд напишем 0
-		return;
-	}
-	uint8_t i=0;
-	do
-	{
-		Send_7219(++i,n%10);
-		n/=10;
-	} while (n);
-	if (ng)
-	{
-		Send_7219(i+1,0xA);//символ —
-	}
-}
-
-void Init_7219(char dg)
-{
-	Send_7219(DISPLAY_TEST,0);//disokay test
-	Send_7219(DECODE_MODE,0b1111);//включим режим декодирования
-	Send_7219(SCAN_LIMIT,dg-1);//кол-во используемых разрядов
-	Send_7219(INTENSITY,32);//интенсивность свечения
-
-	Send_7219(SHUTDOWN,0x01);//включим индикатор
-	Clear_7219(dg);
-}
 
 /* USER CODE END 0 */
 
@@ -214,24 +186,56 @@ int main(void) {
 	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-	AppConfig::getInstance().setDelay(1000);
+	AppConfig::getInstance().setDelay(2000);
 	//Init_7219(7);
 	Display7segmentMax7219 display(hspi1, GPIOA, GPIO_PIN_4);
-	display.init(4);
-//	display.printItos(4, 567890);
-	display.printItos(5, 567890);
+	display.init(14, 8);
+
+	display.print(-53.1234f, 4);
 	HAL_Delay(AppConfig::getInstance().getDelay());
-	display.printItos(6, 567890);
+	display.clean();
+
+	display.print(-53.1234f, 3);
 	HAL_Delay(AppConfig::getInstance().getDelay());
-	display.printItos(7, 567890);
+	display.clean();
+
+	display.print(-53.1234f, 0);
 	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(53.1234f, 0);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(567890, 5);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(567890, 6);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(567890, 7);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(567890);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	display.print(99999999);
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
+
+	HAL_Delay(AppConfig::getInstance().getDelay());
+	display.clean();
 	//display.printItos(8, 567890);
 	while (1) {
 		Port<Ports::GPIOc>::set(13);
-		Send_7219(1, 0x01);//1
+		display.clean();
 		HAL_Delay(AppConfig::getInstance().getDelay());
 		Port<Ports::GPIOc>::reset(13);
-		Send_7219(2, 0x02);//2
+
 		HAL_Delay(AppConfig::getInstance().getDelay());
 		//printf("Hello World\n\r");
 		/* USER CODE END WHILE */

@@ -27,9 +27,7 @@ uint8_t Display7segmentMax7219::SYMBOLS[] = {
 		0x00	// blank
 };
 
-static int numberOfDigits = 8;
-
-static uint32_t lcdPow10(uint8_t n)
+static uint32_t getPow10n(uint8_t n)
 {
 	uint32_t retval = 1u;
 
@@ -46,14 +44,14 @@ Display7segmentMax7219::~Display7segmentMax7219() {
 	// TODO Auto-generated destructor stub
 }
 
-void Display7segmentMax7219::init(uint8_t intensity){
-	turnOn();
-	sendData(static_cast<uint8_t>(Registers::REG_DISPLAY_TEST), 0);//disokay test
-	setDecodeMode();//включим режим декодирования
-	sendData(static_cast<uint8_t>(Registers::REG_SCAN_LIMIT), numberOfDigits - 1);
+void Display7segmentMax7219::init(uint8_t intensity, uint8_t maxDigits){
+	m_maxDigits = maxDigits;
+	sendData(static_cast<uint8_t>(Registers::REG_DISPLAY_TEST), 0);
+	setDecodeMode();
+	sendData(static_cast<uint8_t>(Registers::REG_SCAN_LIMIT), m_maxDigits - 1);
 	setIntensity(intensity);
+	turnOn();
 	clean();
-
 }
 
 void Display7segmentMax7219::setIntensity(uint8_t intensivity)
@@ -68,18 +66,12 @@ void Display7segmentMax7219::setIntensity(uint8_t intensivity)
 
 void Display7segmentMax7219::clearDigit(uint8_t digit)
 {
-	uint8_t clear = decodeMode == 0xFF ? (uint8_t)Display7segmentMax7219::Letters::BLANK : 0x00;
-
+	uint8_t clear = decodeMode == 0xFF ? static_cast<uint8_t>(Display7segmentMax7219::Letters::BLANK) : 0x00;
 	sendData(digit, clear);
 }
 
 void Display7segmentMax7219::clean(void){
-	uint8_t clear = 0x00;
-
-	if(decodeMode == 0xFF)
-	{
-		clear = (uint8_t)Display7segmentMax7219::Letters::BLANK;
-	}
+	uint8_t clear = decodeMode == 0xFF ? static_cast<uint8_t>(Display7segmentMax7219::Letters::BLANK) : 0x00;
 
 	for (int i = 0; i < 8; ++i)
 	{
@@ -89,15 +81,15 @@ void Display7segmentMax7219::clean(void){
 
 void Display7segmentMax7219::sendData(uint8_t reg, uint8_t value)
 {
-	uint8_t tx_data[2] = { reg, value };
+	uint8_t txData[2] = { reg, value };
 	HAL_GPIO_WritePin(m_spiPort, m_spiPin, GPIO_PIN_RESET);
-	HAL_SPI_Transmit(&m_spi, tx_data, 2, 100);
+	HAL_SPI_Transmit(&m_spi, txData, 2, 100);
 	HAL_GPIO_WritePin(m_spiPort, m_spiPin, GPIO_PIN_SET);
 }
 
 void Display7segmentMax7219::printDigit(int position, Letters numeric, bool point)
 {
-	if(position > 8)
+	if(position > m_maxDigits)
 	{
 		return;
 	}
@@ -126,11 +118,16 @@ void Display7segmentMax7219::printDigit(int position, Letters numeric, bool poin
 	}
 }
 
-int Display7segmentMax7219::print(int position, float value, uint8_t n)
+int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint)
 {
-	if(n > 4)
+	return print(value, digitsAfterPoint, m_maxDigits);
+}
+
+int Display7segmentMax7219::print(float value, uint8_t digitsAfterPoint, int position)
+{
+	if(digitsAfterPoint > 4)
 	{
-		n = 4;
+		digitsAfterPoint = 4;
 	}
 
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), 0xFF);
@@ -146,13 +143,11 @@ int Display7segmentMax7219::print(int position, float value, uint8_t n)
 		value = -value;
 	}
 
-	position = printItos(position, (int32_t) value);
-
-	if (n > 0u)
+	position -= print(static_cast<int>(value), position, digitsAfterPoint>0);
+	int decimal = (value - static_cast<int>(value))*getPow10n(digitsAfterPoint);
+	if (digitsAfterPoint > 0u)
 	{
-		printDigit(position + 1, (Letters)(((int32_t) value) % 10), true);
-
-		position = printNtos(position, (uint32_t) (value * (float) lcdPow10(n)), n);
+		print(decimal, position);
 	}
 
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
@@ -160,11 +155,14 @@ int Display7segmentMax7219::print(int position, float value, uint8_t n)
 	return position;
 }
 
-int Display7segmentMax7219::printItos(int position, int value)
+int Display7segmentMax7219::print(int value)
+{
+	return print(value, m_maxDigits, false);
+}
+int Display7segmentMax7219::print(int value, uint8_t position, bool withPoint)
 {
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), 0xFF);
 
-	int32_t numberOfDigits{};
 	int length{};
 	if (value < 0)
 	{
@@ -177,20 +175,14 @@ int Display7segmentMax7219::printItos(int position, int value)
 		++length;
 	}
 
-	int tempValue = value;
-
-	while (tempValue != 0)
-	{
-		tempValue /= 10;
-		++numberOfDigits;
-	}
+	int32_t numberOfDigits{getLengthInDigits(value)};
 
 	int rightCursor = position - numberOfDigits + 1;
 
 	int trailingSpacesCount = position - numberOfDigits;
 
-
-	tempValue = value;
+	int tempValue = value;
+	int lastIntDigit{tempValue%10};
 	while (tempValue != 0)
 	{
 		int digit = tempValue % 10;
@@ -208,37 +200,21 @@ int Display7segmentMax7219::printItos(int position, int value)
 		clearDigit(trailingSpacesCount);
 		--trailingSpacesCount;
 	}
-
+	if(withPoint)
+	{
+		if(decodeMode == 0x00)
+		{
+			sendData(position - numberOfDigits + 1, SYMBOLS[lastIntDigit] | (1 << 7));
+		}
+		else if(decodeMode == 0xFF)
+		{
+			sendData(position - numberOfDigits + 1, lastIntDigit | (1 << 7));
+		}
+	}
 	// set back initial decode mode
 	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
 
-
 	return length;
-}
-
-int Display7segmentMax7219::printNtos(int position, uint32_t value, uint8_t n)
-{
-	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), 0xFF);
-
-	if (n > 0u)
-	{
-		uint32_t i = lcdPow10(n - 1u);
-
-		while (i > 0u)	/* Display at least one symbol */
-		{
-			if(position > 0u)
-			{
-				sendData(position, (value / i) % 10u);
-				position--;
-			}
-
-			i /= 10u;
-		}
-	}
-
-	sendData(static_cast<uint8_t>(Registers::REG_DECODE_MODE), decodeMode);
-
-	return position;
 }
 
 void Display7segmentMax7219::turnOn(void)

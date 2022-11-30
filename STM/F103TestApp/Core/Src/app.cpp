@@ -17,7 +17,7 @@ App::initializePorts ()
     // Pins C13, C14 are used as output ports for signaling purpose (connected to LEDs)
     Port<Ports::GPIOc>::reset (13, 14);
 
-    Port<Ports::GPIOc>::configure (Configuration::Out, PullMode::NoPull,
+    Port<Ports::GPIOc>::configure (Configuration::OutPushPull, PullMode::NoPull,
                                    Speed::Fastest, 13, 14);
 
     Port<Ports::GPIOa>::configure (Configuration::ItRaisingFalling, PullMode::NoPull,
@@ -27,6 +27,6 @@ App::initializePorts ()
 
     // Pint C5, C6, C7 are used for SPI (clock, cs, data)
     Port<Ports::GPIOa>::reset (4);
-    Port<Ports::GPIOa>::configure (Configuration::Out, PullMode::NoPull,
+    Port<Ports::GPIOa>::configure (Configuration::OutPushPull, PullMode::NoPull,
                                    Speed::Medium, 4);
 }

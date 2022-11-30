@@ -15,6 +15,29 @@ class Display7segmentMax7219 {
 	uint8_t decodeMode;
 	GPIO_TypeDef* m_spiPort;
 	uint16_t m_spiPin;
+	uint8_t m_maxDigits;
+	uint8_t getLengthInDigits(int value)
+	{
+		uint8_t numberOfDigits{};
+		while (value != 0)
+		{
+			value /= 10;
+			++numberOfDigits;
+		}
+		return numberOfDigits;
+	}
+
+//	uint8_t getLengthInDigits(float value)
+//	{
+//		uint8_t numberOfIntPartDigits{getLengthInDigits(static_cast<uint8_t>(value))};
+//
+//		while (value != 0)
+//		{
+//			value /= 10;
+//			++numberOfDigits;
+//		}
+//		return numberOfDigits;
+//	}
 public:
 
 
@@ -68,7 +91,7 @@ public:
 		m_spiPin(spiPin)
 	{}
 
-	void init(uint8_t intensivity);
+	void init(uint8_t intensivity, uint8_t maxDigits);
 	void printDigit(int position, Letters numeric, bool point);
 	void sendData(uint8_t reg, uint8_t value);
 	void clean(void);
@@ -78,9 +101,10 @@ public:
 	void setDecodeMode(void);
 	void resetDecodeMode(void);
 	void setIntensity(uint8_t intensivity);
-	int print(int position, float value, uint8_t n);
-	int printNtos(int position, uint32_t value, uint8_t n);
-	int printItos(int position, int value);
+	int print(float value, uint8_t digitsAfterPoint);
+	int print(float value, uint8_t digitsAfterPoint, int position);
+	int print(int value);
+	int print(int value, uint8_t position, bool withPoint = false);
 	virtual ~Display7segmentMax7219();
 };
 

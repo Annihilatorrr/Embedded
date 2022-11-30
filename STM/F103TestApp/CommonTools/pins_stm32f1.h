@@ -8,46 +8,7 @@
 #ifndef PINS_STM32F1_H_
 #define PINS_STM32F1_H_
 #include "stm32f1xx_hal.h"
-
-enum Ports
-{
-    GPIOa, GPIOc, GPIOd
-};
-
-enum Configuration
-{
-    In = 0,
-    Out = 1,
-    AltFunc = 2,
-    Analog = 3,
-    ItRising = 0x10110000u,
-	ItFalling = 0x10210000u,
-	ItRaisingFalling = 0x10310000u
-};
-
-// Pull mode
-enum PullMode
-{
-    NoPull = 0,
-    PullUp   = 1,
-    PullDown = 2
-};
-
-// Port driver type
-enum DriverType
-{
-    PushPull = 0,   ///< Push-pull
-    OpenDrain = 1   ///< Open-drain
-};
-
-// Port speed
-enum Speed
-{
-    Slow = 0, ///< Slow (< 2 MHz)
-    Medium = 1, ///< Medium (< 10 MHz)
-    Fast = 2, ///< Fast (< 50MHz)
-    Fastest = 3 ///< Fastest (< 50MHz)
-};
+#include "definitions.h"
 
 template<Ports PORT>
     class PortBase
@@ -83,7 +44,6 @@ template<>
         enable ()
         {
             __HAL_RCC_GPIOA_CLK_ENABLE();
-
         }
 
         template <typename ...T> static void reset(T... pins)
@@ -167,4 +127,4 @@ template<>
         }
     };
 
-#endif /* SRC_WRAPPERS_PINS_H_ */
+#endif
