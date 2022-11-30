@@ -13,8 +13,8 @@
 class Display7segmentMax7219 {
 	SPI_HandleTypeDef& m_spi;
 	uint8_t decodeMode;
-	GPIO_TypeDef* m_spiPort;
-	uint16_t m_spiPin;
+	GPIO_TypeDef* m_spiCsPort;
+	uint16_t m_spiCsPin;
 	uint8_t m_maxDigits;
 	uint8_t getLengthInDigits(int value)
 	{
@@ -85,10 +85,10 @@ public:
 		BLANK		= 0x0F
 	};
 
-	Display7segmentMax7219(SPI_HandleTypeDef& spi, GPIO_TypeDef *spiPort, uint16_t spiPin):
+	Display7segmentMax7219(SPI_HandleTypeDef& spi, GPIO_TypeDef *spiCsPort, uint16_t spiCsPin):
 		m_spi(spi),
-		m_spiPort(spiPort),
-		m_spiPin(spiPin)
+		m_spiCsPort(spiCsPort),
+		m_spiCsPin(spiCsPin)
 	{}
 
 	void init(uint8_t intensivity, uint8_t maxDigits);
