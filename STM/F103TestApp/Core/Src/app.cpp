@@ -25,7 +25,7 @@ App::initializePorts ()
     Port<Ports::GPIOa>::configure (Configuration::ItRaisingFalling, PullMode::NoPull,
                                    Speed::Fastest, 1);
 
-    // Pint C5, C6, C7 are used for SPI (clock, cs, data)
+    // Pint A4, A5, A7 are used for SPI (CS, clock, data)
     Port<Ports::GPIOa>::reset (4);
     Port<Ports::GPIOa>::configure (Configuration::OutPushPull, PullMode::NoPull,
                                    Speed::Medium, 4);

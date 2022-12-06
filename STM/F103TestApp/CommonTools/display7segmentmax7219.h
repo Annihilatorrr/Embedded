@@ -10,7 +10,8 @@
 
 #include "stm32f1xx_hal.h"
 
-class Display7segmentMax7219 {
+class Display7segmentMax7219
+{
 	SPI_HandleTypeDef& m_spi;
 	uint8_t decodeMode;
 	GPIO_TypeDef* m_spiCsPort;
