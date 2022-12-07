@@ -18,6 +18,7 @@ _backlightval(static_cast<uint8_t>(BacklightFlags::LCD_BACKLIGHT))
 	//sendCommand(0b00000010);   // установка курсора в начале строки
 	//sendCommand(0b00001100);   // нормальный режим работы
 	//sendCommand(0b00000001);   // очистка дисплея
+	HAL_Delay(100);
 	sendCommand(0x30);
 	HAL_Delay(50);
 	sendCommand(0x30);
@@ -26,17 +27,17 @@ _backlightval(static_cast<uint8_t>(BacklightFlags::LCD_BACKLIGHT))
 	HAL_Delay(50);
 	sendCommand(0x20);
 	HAL_Delay(100);
-	sendCommand(0x28); //0010 1000 (Function set DL = 0, N = 1 (2 line), F = 0 (5x8))
+	sendCommand(0x28); //0010 1000 (Function set DL = 0 (4bit), N = 1 (2 line), F = 0 (5x8))
+	sendCommand(0x28); //0010 1000 (Function set DL = 0 (4bit), N = 1 (2 line), F = 0 (5x8))
 	HAL_Delay(1);
-	sendCommand(0x8); // 0000 1000 (Display on/off Display = 0, Cursor = 1, Blinking = 0)
+	sendCommand(0x0C); // 0000 1000 (Display on/off Display = 0, Cursor = 0, Blinking = 0)
 	HAL_Delay(1);
 	sendCommand(0x01); // clear
 	HAL_Delay(1);
 	HAL_Delay(1);
-	sendCommand(0x06);
+	sendCommand(0x06); // increment cursor automatically
 	HAL_Delay(1);
-	sendCommand(0x0C);
-	sendCommand(0x01);
+	sendCommand(0x80); // set cursor to row 1, column 1
 	//sendCommand(_backlightval);
 	// 4-bit mode, 2 lines, 5x7 format
 	//sendCommand(0b00110000);
@@ -84,10 +85,10 @@ void LiquidCrystalI2C::send(uint8_t data, uint8_t isData)
 
 	uint8_t data_arr[]
 	 {
-			 hi|isData|(1 << 3) |pinEnabled,
-			 hi|isData|(1 << 3) ,
-			 low|isData|(1 << 3) |pinEnabled,
-			 low|isData|(1 << 3)
+		 hi|isData|_backlightval |pinEnabled,
+		 hi|isData|_backlightval ,
+		 low|isData|_backlightval |pinEnabled,
+		 low|isData|_backlightval
 	 };
 
 
@@ -99,9 +100,40 @@ void LiquidCrystalI2C::sendString(char *str)
 {
 	while(*str)
 	{
-		sendValue((uint8_t)(*str));
+		if (*str != '\n')
+		{
+			sendData((uint8_t)(*str));
+		}
+		else
+		{
+			setCursor(1, 0);
+		}
 		str++;
 	}
+}
+
+void LiquidCrystalI2C::turnOffBacklight()
+{
+	_backlightval = static_cast<uint8_t>(BacklightFlags::LCD_NOBACKLIGHT);
+	sendData(0);
+}
+
+void LiquidCrystalI2C::turnOnBacklight()
+{
+	_backlightval = static_cast<uint8_t>(BacklightFlags::LCD_BACKLIGHT);
+	sendData(0);
+}
+
+void LiquidCrystalI2C::autoscroll(void)
+{
+	_displaycontrol |= static_cast<uint8_t>(DisplayEntryModeds::LCD_ENTRYSHIFTINCREMENT);
+	sendCommand(static_cast<uint8_t>(Commands::LCD_ENTRYMODESET) | _displaycontrol);
+}
+
+void LiquidCrystalI2C::noAutoscroll(void)
+{
+	_displaycontrol &= ~static_cast<uint8_t>(DisplayEntryModeds::LCD_ENTRYSHIFTINCREMENT);
+	sendCommand(static_cast<uint8_t>(Commands::LCD_ENTRYMODESET) | _displaycontrol);
 }
 
 void LiquidCrystalI2C::blink()
@@ -124,16 +156,24 @@ void LiquidCrystalI2C::writeByte(uint8_t data)
 	HAL_I2C_Master_Transmit(&m_hi2c,m_address, buf, sizeof(buf), 5);
 }
 
-void LiquidCrystalI2C::sendCommand(uint8_t data)
+void LiquidCrystalI2C::sendCommand(uint8_t value)
 {
-	send(data, 0);
+	send(value, 0);
 }
-void LiquidCrystalI2C::sendValue(uint8_t data)
+void LiquidCrystalI2C::sendData(uint8_t value)
 {
-	send(data, 1);
+	send(value, 1);
+}
+
+void LiquidCrystalI2C::setCursor(uint8_t row, uint8_t column)
+{
+	uint8_t cellIndex = 0x40*row | column;
+	auto cmd = static_cast<uint8_t>(Commands::LCD_SETDDRAMADDR)|cellIndex;
+	sendCommand(cmd);
 }
 
 LiquidCrystalI2C::~LiquidCrystalI2C() {
 	// TODO Auto-generated destructor stub
 }
+
 

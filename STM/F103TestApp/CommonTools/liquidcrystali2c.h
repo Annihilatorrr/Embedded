@@ -36,8 +36,13 @@ public:
 	void showCursor();
 	void hideCursor();
 	void sendCommand(uint8_t data);
-	void sendValue(uint8_t data);
+	void sendData(uint8_t data);
 	void sendString(char *str);
+	void autoscroll(void);
+	void noAutoscroll(void);
+	void turnOffBacklight();
+	void turnOnBacklight();
+	void setCursor(uint8_t row, uint8_t column);
 	enum class BacklightFlags
 	{
 		LCD_BACKLIGHT = 0x08,
@@ -54,6 +59,13 @@ public:
 		LCD_BLINKOFF = 0x00
 	};
 
+	enum class DisplayEntryModeds
+	{
+		LCD_ENTRYRIGHT = 0x00,
+		LCD_ENTRYLEFT = 0x02,
+		LCD_ENTRYSHIFTINCREMENT = 0x01,
+		LCD_ENTRYSHIFTDECREMENT = 0x00
+	};
 	enum class Commands
 	{
 		LCD_CLEARDISPLAY = 0x01,

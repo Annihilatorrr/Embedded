@@ -141,13 +141,16 @@ int main(void) {
 	MX_SPI1_Init();
 	MX_I2C1_Init();
 	LiquidCrystalI2C lcd(hi2c1, 0x27 << 1, 2, 20);
-	lcd.sendString("qwesss");
-
 	lcd.showCursor();
+	lcd.sendString("Hello\nWorld");
+	//lcd.turnOffBacklight();
+	//lcd.turnOnBacklight();
+	lcd.showCursor();
+	lcd.setCursor(1, 0);
 	lcd.hideCursor();
 	lcd.blink();
 	lcd.noBlink();
-	lcd.clear();
+	//lcd.clear();
 	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
