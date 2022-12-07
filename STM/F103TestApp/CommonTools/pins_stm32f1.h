@@ -62,7 +62,37 @@ template<>
         }
     };
 
+template<>
+    class Port<Ports::GPIOb>:public PortBase<Ports::GPIOb>
+    {
+    static void configurePin(Configuration mode, PullMode pullMode, Speed speed, uint16_t pin)
+    {
+        GPIO_InitTypeDef gPIO_InitStruct;
+        PortBase<Ports::GPIOb>::configurePin(gPIO_InitStruct, mode, pullMode, speed, pin);
+        HAL_GPIO_Init(GPIOB, &gPIO_InitStruct);
+    }
+    public:
+        static void
+        enable ()
+        {
+            __HAL_RCC_GPIOB_CLK_ENABLE();
+        }
 
+        template <typename ...T> static void reset(T... pins)
+        {
+            (HAL_GPIO_WritePin(GPIOB, 0x0001 << pins, GPIO_PIN_RESET), ...);
+        }
+
+        template <typename ...T> static void set(T... pins)
+        {
+            (HAL_GPIO_WritePin(GPIOB, 0x0001 << pins, GPIO_PIN_SET), ...);
+        }
+
+        template <typename ...T> static void configure(Configuration mode, PullMode pullMode, Speed speed, T... pins)
+        {
+            (configurePin(mode, pullMode, speed, pins), ...);
+        }
+    };
 template<>
     class Port<Ports::GPIOc>:public PortBase<Ports::GPIOc>
     {

@@ -11,6 +11,7 @@ void
 App::initializePorts ()
 {
     Port<Ports::GPIOa>::enable ();
+    Port<Ports::GPIOb>::enable ();
     Port<Ports::GPIOc>::enable ();
     Port<Ports::GPIOd>::enable ();
 

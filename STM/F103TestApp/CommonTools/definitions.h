@@ -3,7 +3,7 @@
 
 enum Ports
 {
-    GPIOa, GPIOc, GPIOd
+    GPIOa, GPIOb, GPIOc, GPIOd
 };
 
 enum Configuration

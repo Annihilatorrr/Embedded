@@ -57,13 +57,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define OnClickPA0_Pin GPIO_PIN_0
-#define OnClickPA0_GPIO_Port GPIOA
-#define OnClickPA0_EXTI_IRQn EXTI0_IRQn
-#define OnClickPA1_Pin GPIO_PIN_1
-#define OnClickPA1_GPIO_Port GPIOA
-#define OnClickPA1_EXTI_IRQn EXTI1_IRQn
-
+#define TOUCH_CS_Pin GPIO_PIN_0
+#define TOUCH_CS_GPIO_Port GPIOB
+#define TFT_CS_Pin GPIO_PIN_1
+#define TFT_CS_GPIO_Port GPIOB
+#define IRQ_Pin GPIO_PIN_2
+#define IRQ_GPIO_Port GPIOB
+#define TFT_RESET_Pin GPIO_PIN_10
+#define TFT_RESET_GPIO_Port GPIOB
+#define TFT_DC_Pin GPIO_PIN_11
+#define TFT_DC_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

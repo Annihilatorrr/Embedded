@@ -25,6 +25,11 @@
 #include "../CommonTools/pins.h"
 #include "../CommonTools/display7segmentmax7219.h"
 #include "../CommonTools/liquidcrystali2c.h"
+
+#include "ILI9341_GFX.h"
+#include "fonts.h"
+//#include "img.h"
+#include "xpt2046_touch.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,7 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 SPI_HandleTypeDef hspi1;
-I2C_HandleTypeDef hi2c1;
+//I2C_HandleTypeDef hi2c1;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -108,6 +113,7 @@ void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin)
  */
 
 
+
 int main(void) {
 	/* USER CODE BEGIN 1 */
 
@@ -138,25 +144,63 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	App::initializePorts();
+	HAL_GPIO_WritePin(GPIOB, TOUCH_CS_Pin|TFT_CS_Pin|TFT_RESET_Pin|TFT_DC_Pin, GPIO_PIN_RESET);
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	GPIO_InitStruct.Pin = TOUCH_CS_Pin|TFT_CS_Pin|TFT_RESET_Pin|TFT_DC_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/*Configure GPIO pin : IRQ_Pin */
+	GPIO_InitStruct.Pin = IRQ_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(IRQ_GPIO_Port, &GPIO_InitStruct);
+
 	MX_SPI1_Init();
-	MX_I2C1_Init();
-	LiquidCrystalI2C lcd(hi2c1, 0x27 << 1, 2, 20);
-	lcd.showCursor();
-	lcd.sendString("Hello\nWorld");
+	//MX_I2C1_Init();
+	//LiquidCrystalI2C lcd(hi2c1, 0x27 << 1, 2, 20);
+	//lcd.showCursor();
+	//lcd.sendString("Hello\nWorld");
+//	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+//	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+//
+//	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+//	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+
+	DISP_CS_UNSELECT;
+	TOUCH_CS_UNSELECT; // это нужно только если есть тач
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ILI9341_Init(); // инициализация дисплея
+
+	/////////////////////////// далее демонстрируются различные пользовательские функции ////////////////////////////
+	ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2); // установка ориентации экрана (варианты в файле ILI9341_GFX.h)
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ILI9341_Fill_Screen(MYFON); // заливка всего экрана цветом (цвета в файле ILI9341_GFX.h)
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/* вывод строк разными шрифтами (шрифты определены в файле fonts.h, а массивы шрифтов в файле fonts.c)
+	  первый и второй аргумент это начало координат (справа, сверху), четвёртый аргумент шрифт
+	  два последних аргумента это цвет шрифта и цвет фона шрифта */
+
+	ILI9341_WriteString(10, 10, "Hello World", Font_7x10, WHITE, MYFON); // можно передавать непосредственно текст
+	ILI9341_WriteString(20, 30, "Hello World", Font_11x18, WHITE, MYFON);
+	ILI9341_WriteString(30, 60, "Hello World", Font_16x26, BLUE, DARKGREEN);
+
 	//lcd.turnOffBacklight();
 	//lcd.turnOnBacklight();
-	lcd.showCursor();
-	lcd.setCursor(1, 0);
-	lcd.hideCursor();
-	lcd.blink();
-	lcd.noBlink();
+	//lcd.showCursor();
+	//lcd.setCursor(1, 0);
+	//lcd.hideCursor();
+	//lcd.blink();
+	//lcd.noBlink();
 	//lcd.clear();
 	/* EXTI interrupt init*/
-	HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-	HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
 	AppConfig::getInstance().setDelay(1000);
 	//Init_7219(7);
@@ -296,19 +340,19 @@ static void MX_I2C1_Init(void)
 	/* USER CODE BEGIN I2C1_Init 1 */
 
 	/* USER CODE END I2C1_Init 1 */
-	hi2c1.Instance = I2C1;
-	hi2c1.Init.ClockSpeed = 100000;
-	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	hi2c1.Init.OwnAddress1 = 0;
-	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	hi2c1.Init.OwnAddress2 = 0;
-	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-	{
-		Error_Handler();
-	}
+//	hi2c1.Instance = I2C1;
+//	hi2c1.Init.ClockSpeed = 100000;
+//	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+//	hi2c1.Init.OwnAddress1 = 0;
+//	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+//	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+//	hi2c1.Init.OwnAddress2 = 0;
+//	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+//	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+//	if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+//	{
+//		Error_Handler();
+//	}
 	/* USER CODE BEGIN I2C1_Init 2 */
 
 	/* USER CODE END I2C1_Init 2 */
@@ -342,6 +386,7 @@ static void MX_SPI1_Init(void)
 	{
 		Error_Handler();
 	}
+
 	/* USER CODE BEGIN SPI1_Init 2 */
 
 	/* USER CODE END SPI1_Init 2 */
