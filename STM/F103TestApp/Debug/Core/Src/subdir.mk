@@ -7,7 +7,6 @@
 C_SRCS += \
 ../Core/Src/ILI9341_GFX.c \
 ../Core/Src/fonts.c \
-../Core/Src/main.c \
 ../Core/Src/stm32f1xx_hal_msp.c \
 ../Core/Src/stm32f1xx_it.c \
 ../Core/Src/syscalls.c \
@@ -23,7 +22,6 @@ CPP_SRCS += \
 C_DEPS += \
 ./Core/Src/ILI9341_GFX.d \
 ./Core/Src/fonts.d \
-./Core/Src/main.d \
 ./Core/Src/stm32f1xx_hal_msp.d \
 ./Core/Src/stm32f1xx_it.d \
 ./Core/Src/syscalls.d \

@@ -31,3 +31,4 @@ App::initializePorts ()
     Port<Ports::GPIOa>::configure (Configuration::OutPushPull, PullMode::NoPull,
                                    Speed::Medium, 4);
 }
+

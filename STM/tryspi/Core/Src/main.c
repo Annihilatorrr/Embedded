@@ -98,7 +98,7 @@ int main(void)
 
     // Simple Text writing (Text, Font, X, Y, Color, BackColor)
     // Available Fonts are FONT1, FONT2, FONT3 and FONT4
-    ILI9341_FillScreen(WHITE);
+    ILI9341_FillScreen(RED);
     ILI9341_SetRotation(SCREEN_HORIZONTAL_2);
     ILI9341_DrawText("HELLO WORLD", FONT4, 90, 110, BLACK, WHITE);
     HAL_Delay(1000);
@@ -241,10 +241,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, TOUCH_CS_Pin|TFT_CS_Pin|TFT_RST_Pin|TFT_DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, TOUCH_CS_Pin|LCD_CS_PIN|LCD_RST_PIN|LCD_DC_PIN, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : TOUCH_CS_Pin TFT_CS_Pin TFT_RST_Pin TFT_DC_Pin */
-  GPIO_InitStruct.Pin = TOUCH_CS_Pin|TFT_CS_Pin|TFT_RST_Pin|TFT_DC_Pin;
+  GPIO_InitStruct.Pin = TOUCH_CS_Pin|LCD_CS_PIN|LCD_RST_PIN|LCD_DC_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
