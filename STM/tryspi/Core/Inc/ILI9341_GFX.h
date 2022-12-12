@@ -1,26 +1,18 @@
-#ifndef ILI9341_STM32_DRIVER_H
-#define ILI9341_STM32_DRIVER_H
+#ifndef STM32_DRIVER_H
+#define STM32_DRIVER_H
 
 #include "stm32f1xx_hal.h"
 
-extern SPI_HandleTypeDef hspi1;
-
-#define ILI9341_SCREEN_HEIGHT 	240
-#define ILI9341_SCREEN_WIDTH 	320
+#define SCREEN_HEIGHT 	240
+#define SCREEN_WIDTH 	320
 
 #define HORIZONTAL_IMAGE	0
 #define VERTICAL_IMAGE		1
 
-void ILI9341_DrawHollowCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color);
-void ILI9341_DrawFilledCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color);
-void ILI9341_DrawHollowRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color);
-void ILI9341_DrawFilledRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color);
-void ILI9341_DrawChar(char ch, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
-void ILI9341_DrawText(const char* str, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
-void ILI9341_DrawImage(const uint8_t* image, uint8_t orientation);
+
 
 /* PIN Configuration */
-#define HSPI_INSTANCE			&hspi1
+
 #define LCD_CS_PORT				GPIOB
 #define LCD_CS_PIN				GPIO_PIN_10
 #define LCD_DC_PORT				GPIOB
@@ -54,19 +46,35 @@ void ILI9341_DrawImage(const uint8_t* image, uint8_t orientation);
 #define SCREEN_VERTICAL_2		2
 #define SCREEN_HORIZONTAL_2		3
 
-void ILI9341_WriteCommand(uint8_t cmd);
-void ILI9341_WriteData(uint8_t data);
-void ILI9341_WriteBuffer(uint8_t *buffer, uint16_t len);
-void ILI9341_Reset(void);
-void ILI9341_Enable(void);
-void ILI9341_Init(void);
-void ILI9341_SetRotation(uint8_t rotation);
-void ILI9341_SetAddress(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
-void ILI9341_DrawColor(uint16_t color);
-void ILI9341_DrawColorBurst(uint16_t color, uint32_t size);
-void ILI9341_FillScreen(uint16_t color);
-void ILI9341_DrawPixel(uint16_t x,uint16_t y,uint16_t color);
-void ILI9341_DrawRectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color);
-void ILI9341_DrawHLine(uint16_t x, uint16_t y, uint16_t width, uint16_t color);
-void ILI9341_DrawVLine(uint16_t x, uint16_t y, uint16_t height, uint16_t color);
+class Ili9341TftDisplay
+{
+	SPI_HandleTypeDef& m_hspi;
+	void Init(void);
+public:
+	Ili9341TftDisplay(SPI_HandleTypeDef& hspi1);
+	void WriteCommand(uint8_t cmd);
+	void SPI_Tx(uint8_t data);
+	void SPI_TxBuffer(uint8_t *buffer, uint16_t len);
+	void WriteData(uint8_t data);
+	void WriteBuffer(uint8_t *buffer, uint16_t len);
+	void Reset(void);
+	void Enable(void);
+
+	void SetRotation(uint8_t rotation);
+	void SetAddress(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+	void DrawColor(uint16_t color);
+	void DrawColorBurst(uint16_t color, uint32_t size);
+	void FillScreen(uint16_t color);
+	void DrawPixel(uint16_t x,uint16_t y,uint16_t color);
+	void DrawRectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color);
+	void DrawHLine(uint16_t x, uint16_t y, uint16_t width, uint16_t color);
+	void DrawVLine(uint16_t x, uint16_t y, uint16_t height, uint16_t color);
+	void DrawHollowCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color);
+	void DrawFilledCircle(uint16_t X, uint16_t Y, uint16_t radius, uint16_t color);
+	void DrawHollowRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color);
+	void DrawFilledRectangleCoord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t color);
+	void DrawChar(char ch, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
+	void DrawText(const char* str, const uint8_t font[], uint16_t X, uint16_t Y, uint16_t color, uint16_t bgcolor);
+	void DrawImage(const uint8_t* image, uint8_t orientation);
+};
 #endif

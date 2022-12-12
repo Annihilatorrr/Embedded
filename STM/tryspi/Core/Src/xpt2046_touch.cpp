@@ -27,8 +27,12 @@ static const uint8_t zeroes_tx[] = {0x00, 0x00};
 #include "stdio.h"
 extern UART_HandleTypeDef huart1;*/
 
+Xpt2046Touch::Xpt2046Touch(SPI_HandleTypeDef& hspi):m_hspi(hspi)
+{
 
-uint8_t ILI9341_TouchGetCoordinates(uint16_t *x, uint16_t *y)
+}
+
+uint8_t Xpt2046Touch::TouchGetCoordinates(uint16_t *x, uint16_t *y)
 {
 	if(HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin) != GPIO_PIN_RESET) return 0;
 
@@ -37,15 +41,15 @@ uint8_t ILI9341_TouchGetCoordinates(uint16_t *x, uint16_t *y)
     uint32_t avg_x = 0;
     uint32_t avg_y = 0;
 
-	HAL_SPI_Transmit(TOUCH_SPI_PTR, (uint8_t*)&cmd_read_y, 1, 1000);
+	HAL_SPI_Transmit(&m_hspi, (uint8_t*)&cmd_read_y, 1, 1000);
 
 	uint8_t y_raw[2] = {0,};
-	HAL_SPI_TransmitReceive(TOUCH_SPI_PTR, (uint8_t*)zeroes_tx, y_raw, 2, 1000);
+	HAL_SPI_TransmitReceive(&m_hspi, (uint8_t*)zeroes_tx, y_raw, 2, 1000);
 
-	HAL_SPI_Transmit(TOUCH_SPI_PTR, (uint8_t*)&cmd_read_x, 1, 1000);
+	HAL_SPI_Transmit(&m_hspi, (uint8_t*)&cmd_read_x, 1, 1000);
 
 	uint8_t x_raw[2] = {0,};
-	HAL_SPI_TransmitReceive(TOUCH_SPI_PTR, (uint8_t*)zeroes_tx, x_raw, 2, 1000);
+	HAL_SPI_TransmitReceive(&m_hspi, (uint8_t*)zeroes_tx, x_raw, 2, 1000);
 
 	avg_x = (((uint16_t)x_raw[0]) << 8) | ((uint16_t)x_raw[1]);
 	avg_y = (((uint16_t)y_raw[0]) << 8) | ((uint16_t)y_raw[1]);
