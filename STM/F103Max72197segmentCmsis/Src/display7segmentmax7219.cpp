@@ -80,8 +80,9 @@ void Display7segmentMax7219::clean(void){
 
 void Display7segmentMax7219::sendData(uint8_t rg, uint8_t dt)
 {
+	//GPIOB->BSRR = GPIO_PIN_12;GPIO_BSRR_BR12
 	//m_spiCsPort->ODR &= ~GPIO_ODR_ODR4;
-	m_spiCsPort->BSRR = 1<<m_spiCsPin;
+	m_spiCsPort->BSRR = 1 << m_spiCsPin;
 	while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 	m_spi->DR = rg;
 	while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
@@ -91,7 +92,7 @@ void Display7segmentMax7219::sendData(uint8_t rg, uint8_t dt)
 	while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 	(void) m_spi->DR;
 	//m_spiCsPort->ODR |= GPIO_ODR_ODR4;
-	m_spiCsPort->BSRR = 1<<m_spiCsPin << 16U;
+	m_spiCsPort->BSRR = 1 << m_spiCsPin << 16U;
 }
 
 void Display7segmentMax7219::printDigit(int position, Letters numeric, bool point)

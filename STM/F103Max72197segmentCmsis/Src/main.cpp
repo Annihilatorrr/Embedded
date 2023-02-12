@@ -83,7 +83,7 @@ void spi1_init(void)
 	SPI1->CR2 = 0x0000; // reset SPI configuration registers
 
 	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // enable spi clock
-
+	SPI1->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
 	SPI1->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
 			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
 			| SPI_CR1_SSM               //Software SS
@@ -94,6 +94,43 @@ void spi1_init(void)
 			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
 
 	SPI1->CR1 |= SPI_CR1_SPE; // Enable SPI
+}
+
+void spi2_init(void)
+{
+	GPIOB->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12 | GPIO_CRH_CNF13 | GPIO_CRH_MODE13 | GPIO_CRH_CNF14 | GPIO_CRH_MODE14 | GPIO_CRH_CNF15 | GPIO_CRH_MODE15);
+
+	GPIOB->CRH   |=  GPIO_CRH_MODE15;  // output 50 MHz
+	GPIOB->CRH   &= ~GPIO_CRH_CNF15;	  // Push-Pull
+	GPIOB->CRH   |=  GPIO_CRH_CNF15_1; // alternative function push-pull
+
+	GPIOB->CRH   &= ~GPIO_CRH_MODE14;  // Input
+	GPIOB->CRH   |=  GPIO_CRH_CNF14_1; // with pull-up / pull-down
+	GPIOB->BSRR   =  GPIO_BSRR_BS14;   // Set bit 14 High
+
+	GPIOB->CRH   |=  GPIO_CRH_MODE13;  // output 50 MHz
+	GPIOB->CRH   |=  GPIO_CRH_CNF13_1; // alternative function push-pull
+
+	GPIOB->CRH   |=  GPIO_CRH_MODE12;  // output 50 MHz
+	GPIOB->CRH   &= ~GPIO_CRH_CNF12;	  // Push-Pull General Purpose
+	GPIOB->BSRR   =  GPIO_BSRR_BS12;   // Set bit 12 High
+
+	SPI2->CR1 = 0x0000; // reset SPI configuration registers
+	SPI2->CR2 = 0x0000; // reset SPI configuration registers
+
+	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // enable spi clock
+
+	SPI2->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
+	SPI2->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
+			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
+			| SPI_CR1_SSM               //Software SS
+			| SPI_CR1_SSI               // NSS (CS) pin is high
+			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
+			| SPI_CR1_MSTR // Master mode
+			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
+			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
+
+	SPI2->CR1 |= SPI_CR1_SPE; // Enable SPI
 }
 
 void initPortAClock()
@@ -126,13 +163,24 @@ int main(void)
 	initSwdOnlyDebugging();
 	initAltFunctionsClock();
 	spi1_init();
+	spi2_init();
 	Display7segmentMax7219 d(SPI1, GPIOA, 4);
 	d.init(15, 8);
 	d.print(-82212);
 	/* Loop forever */
-	for(int i = 0;i < 10;++i)
+	for(int i = 0;i < 11;++i)
 	{
 		d.clean();
 		d.print(i);
 	}
+
+	Display7segmentMax7219 d2(SPI2, GPIOB, 12);
+		d2.init(15, 8);
+		d2.print(-82212);
+		/* Loop forever */
+		for(int i = 0;i < 11;++i)
+		{
+			d2.clean();
+			d2.print(i);
+		}
 }

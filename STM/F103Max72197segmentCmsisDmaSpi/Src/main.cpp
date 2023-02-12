@@ -24,6 +24,44 @@
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+uint16_t src_buf[128] = {0};
+uint16_t dst_buf[128] = {0};
+uint32_t full_cnt=0;
+uint8_t fl=0;
+
+#define CS1_SET() CLEAR_BIT(GPIOA->ODR,GPIO_ODR_ODR4)
+#define CS1_RESET() SET_BIT(GPIOA->ODR,GPIO_ODR_ODR4)
+#define SPI1_ENABLE() SET_BIT(SPI1->CR1, SPI_CR1_SPE);
+//----------------------------------------------------------
+extern "C" void DMA1_Channel2_IRQHandler(void)
+{
+	if(READ_BIT(DMA1->ISR, DMA_ISR_TCIF2) == (DMA_ISR_TCIF2))
+	{
+		//Clear Channel 2 global interrupt flag
+		WRITE_REG(DMA1->IFCR, DMA_IFCR_CGIF2);
+		CS1_RESET();
+	}
+	else if(READ_BIT(DMA1->ISR, DMA_ISR_TEIF2) == (DMA_ISR_TEIF2))
+	{
+		__NOP();
+	}
+}
+//----------------------------------------------------------
+extern "C" void DMA1_Channel3_IRQHandler(void)
+{
+	if(READ_BIT(DMA1->ISR, DMA_ISR_TCIF3) == (DMA_ISR_TCIF3))
+	{
+		//Clear Channel 3 global interrupt flag
+		WRITE_REG(DMA1->IFCR, DMA_IFCR_CGIF3);
+		fl = 1;
+	}
+	else if(READ_BIT(DMA1->ISR, DMA_ISR_TEIF3) == (DMA_ISR_TEIF3))
+	{
+		__NOP();
+	}
+}
+
+
 int clockInit(void)
 
 {
@@ -84,6 +122,35 @@ void spi1_init(void)
 
 	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // enable spi clock
 
+	CLEAR_BIT(DMA1_Channel2->CCR, DMA_CCR_DIR | DMA_CCR_MEM2MEM); // Set transfer direction (Peripheral to Memory)
+	CLEAR_BIT(DMA1_Channel2->CCR, DMA_CCR_PL); // Set priority level
+
+
+	CLEAR_BIT(DMA1_Channel2->CCR, DMA_CCR_CIRC); //Transfer mode NORMAL
+	CLEAR_BIT(DMA1_Channel2->CCR, DMA_CCR_PINC); //Set peripheral no increment mode
+
+
+	SET_BIT(DMA1_Channel2->CCR, DMA_CCR_MINC); // Set memory increment mode
+	MODIFY_REG(DMA1_Channel2->CCR, DMA_CCR_PSIZE_1, DMA_CCR_PSIZE_0); //Set peripheral data width
+	MODIFY_REG(DMA1_Channel2->CCR, DMA_CCR_MSIZE_1, DMA_CCR_MSIZE_0); //Set memory data width
+
+	//SPI1_TX Init
+	//Set transfer direction (Memory to Peripheral)
+	MODIFY_REG(DMA1_Channel3->CCR, DMA_CCR_MEM2MEM, DMA_CCR_DIR);
+	//Set priority level
+	CLEAR_BIT(DMA1_Channel3->CCR, DMA_CCR_PL);
+	//Transfer mode NORMAL
+	CLEAR_BIT(DMA1_Channel3->CCR, DMA_CCR_CIRC);
+	//Set peripheral no increment mode
+	CLEAR_BIT(DMA1_Channel3->CCR, DMA_CCR_PINC);
+	//Set memory increment mode
+	SET_BIT(DMA1_Channel3->CCR, DMA_CCR_MINC);
+	//Set peripheral data width
+	MODIFY_REG(DMA1_Channel3->CCR, DMA_CCR_PSIZE_1, DMA_CCR_PSIZE_0);
+	//Set memory data width
+	MODIFY_REG(DMA1_Channel3->CCR, DMA_CCR_MSIZE_1, DMA_CCR_MSIZE_0);
+
+
 	SPI1->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
 			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
 			| SPI_CR1_SSM               //Software SS
@@ -93,7 +160,10 @@ void spi1_init(void)
 			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
 			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
 
+
+
 	SPI1->CR1 |= SPI_CR1_SPE; // Enable SPI
+
 }
 
 void initPortAClock()
@@ -108,6 +178,8 @@ void initPortBClock()
 void initDmaClock()
 {
 	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+	NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+	NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 }
 void initSwdOnlyDebugging()
 {
@@ -122,10 +194,55 @@ int main(void)
 	clockInit();
 	initPortAClock();
 	initPortBClock();
-	//initDmaClock();
+	spi1_init();
+	initDmaClock();
 	initSwdOnlyDebugging();
 	initAltFunctionsClock();
-	spi1_init();
+
+	CLEAR_BIT(DMA1_Channel2->CCR, DMA_CCR_EN);
+	CLEAR_BIT(DMA1_Channel3->CCR, DMA_CCR_EN);
+	WRITE_REG(DMA1->IFCR, DMA_IFCR_CTCIF2);
+	//Clear Channel 2 transfer error flag
+	WRITE_REG(DMA1->IFCR, DMA_IFCR_CTEIF2);
+	//Clear Channel 3 transfer complete flag
+	WRITE_REG(DMA1->IFCR, DMA_IFCR_CTCIF3);
+	//Clear Channel 3 transfer error flag
+	WRITE_REG(DMA1->IFCR, DMA_IFCR_CTEIF3);
+	//Enable DMA Tx SPI1
+	SET_BIT(SPI1->CR2, SPI_CR2_TXDMAEN);
+	//Enable DMA Rx SPI1
+	SET_BIT(SPI1->CR2, SPI_CR2_RXDMAEN);
+	//Enable Transfer complete interrupt Channel2
+	SET_BIT(DMA1_Channel2->CCR, DMA_CCR_TCIE);
+	//Enable Transfer error interrupt Channel2
+	SET_BIT(DMA1_Channel2->CCR, DMA_CCR_TEIE);
+	//Enable Transfer complete interrupt Channel3
+	SET_BIT(DMA1_Channel3->CCR, DMA_CCR_TCIE);
+	//Enable Transfer error interrupt Channel3
+	SET_BIT(DMA1_Channel3->CCR, DMA_CCR_TEIE);
+	SPI1_ENABLE();
+	for(int i=0;i<128;i++)
+	{
+		src_buf[i] = full_cnt + i;
+	}
+	//Disable DMA channels
+	CLEAR_BIT(DMA1_Channel2->CCR, DMA_CCR_EN);
+	CLEAR_BIT(DMA1_Channel3->CCR, DMA_CCR_EN);
+	//Set Number of data to transfer
+	MODIFY_REG(DMA1_Channel2->CNDTR, DMA_CNDTR_NDT, 128);
+	MODIFY_REG(DMA1_Channel3->CNDTR, DMA_CNDTR_NDT, 128);
+	//Configure the Source and Destination addresses
+	WRITE_REG(DMA1_Channel2->CPAR, (uint32_t)&(SPI1->DR));
+	WRITE_REG(DMA1_Channel2->CMAR, (uint32_t)&dst_buf);
+	WRITE_REG(DMA1_Channel3->CPAR, (uint32_t)&(SPI1->DR));
+	WRITE_REG(DMA1_Channel3->CMAR, (uint32_t)&src_buf);
+	CS1_SET();
+	//Enable DMA channels
+	SET_BIT(DMA1_Channel3->CCR, DMA_CCR_EN);
+	SET_BIT(DMA1_Channel2->CCR, DMA_CCR_EN);
+	//while(!fl) {}
+	//fl=0;
+
 	Display7segmentMax7219 d(SPI1, GPIOA, 4);
 	d.init(15, 8);
 	d.print(-82212);
