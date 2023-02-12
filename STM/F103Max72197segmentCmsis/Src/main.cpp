@@ -100,11 +100,11 @@ void spi2_init(void)
 {
 	GPIOB->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12 | GPIO_CRH_CNF13 | GPIO_CRH_MODE13 | GPIO_CRH_CNF14 | GPIO_CRH_MODE14 | GPIO_CRH_CNF15 | GPIO_CRH_MODE15);
 
-	GPIOB->CRH   |=  GPIO_CRH_MODE15;  // output 50 MHz
-	GPIOB->CRH   &= ~GPIO_CRH_CNF15;	  // Push-Pull
-	GPIOB->CRH   |=  GPIO_CRH_CNF15_1; // alternative function push-pull
+	GPIOB->CRH   |=  GPIO_CRH_MODE15;  // output 50 MHz (11)
+	GPIOB->CRH   &= ~GPIO_CRH_CNF15;   // Push-Pull (00)
+	GPIOB->CRH   |=  GPIO_CRH_CNF15_1; // alternative function push-pull (10)
 
-	GPIOB->CRH   &= ~GPIO_CRH_MODE14;  // Input
+	GPIOB->CRH   &= ~GPIO_CRH_MODE14;  // Input (00)
 	GPIOB->CRH   |=  GPIO_CRH_CNF14_1; // with pull-up / pull-down
 	GPIOB->BSRR   =  GPIO_BSRR_BS14;   // Set bit 14 High
 
@@ -178,7 +178,7 @@ int main(void)
 		d2.init(15, 8);
 		d2.print(-82212);
 		/* Loop forever */
-		for(int i = 0;i < 11;++i)
+		for(int i = 0;i < 12;++i)
 		{
 			d2.clean();
 			d2.print(i);
