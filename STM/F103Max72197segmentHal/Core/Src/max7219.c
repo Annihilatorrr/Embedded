@@ -1,16 +1,16 @@
 #include "max7219.h"
 
-extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi1;
 char dg=8;
 
-#define cs_set() HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET)
-#define cs_reset() HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET)
+#define cs_set() HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET)
+#define cs_reset() HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET)
 
 void Send_7219 (uint8_t rg, uint8_t dt)
 {
   uint16_t dtt = (uint16_t)rg << 8 | dt;
 	cs_set();
-	HAL_SPI_Transmit (&hspi2, (uint8_t*)&dtt, 1, 5000);
+	HAL_SPI_Transmit (&hspi1, (uint8_t*)&dtt, 1, 5000);
 	cs_reset();
 }
 //------------------------------------------------------
