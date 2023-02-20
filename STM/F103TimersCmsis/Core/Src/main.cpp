@@ -176,8 +176,11 @@ void initPwmTimer2()
 	TIM2->CCMR1 |= (TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2M_1);
 	TIM2->CCMR2 |= (TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1);
 	TIM2->CCMR2 |= (TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1);
+
+	TIM2->EGR   = TIM_EGR_UG;
 	//start counting
 	TIM2->CR1 |= TIM_CR1_CEN;
+	while(!(TIM2->SR & TIM_SR_UIF));
 }
 
 void initPwmTimer1()
@@ -233,6 +236,7 @@ void initPwmTimer1()
 	TIM1->EGR   = TIM_EGR_UG; // генерируем update event для загрузки всех теневых регистров
 	TIM1->BDTR |= TIM_BDTR_MOE + 12; // разрешение выходных сигналов OCx + dead-time 0.5us
 	TIM1->CR1 |= TIM_CR1_CEN;
+	while(!(TIM1->SR & TIM_SR_UIF));
 }
 void timer1_init(void)
 {
