@@ -18,8 +18,12 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 #include "stm32f1xx.h"
-
+#include "spi.h"
+#include "uart.h"
+#include "rc522.h"
+#include "display7segmentmax7219.h"
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
@@ -78,6 +82,12 @@ void initPortCClock()
 	GPIOC->CRH &= ~GPIO_CRH_CNF14;
 	GPIOC->CRH |= GPIO_CRH_MODE14_1;
 }
+
+void enablePortAClock()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+}
+
 int clockInit(void)
 
 {
@@ -116,10 +126,10 @@ int clockInit(void)
 
 void enableUart()
 {
-	uint32_t BaudRate = 115200;
+	uint32_t baudRate = 115200;
+	uint32_t usartClock = 72000000;
 
-	// enable port A clock
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+	enablePortAClock();
 
 	// enable usart clock
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -127,39 +137,33 @@ void enableUart()
 	// enable AF clock
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
-	/* TX push-pull output, 10MHz */
+	/* TX push-pull output, 50MHz */
 	GPIOA->CRH &= ~GPIO_CRH_CNF9;   //Clear CNF9
 	GPIOA->CRH |= GPIO_CRH_CNF9_1;  //Alternative function, push-pull as CNF9_0 = 0
 	GPIOA->CRH |= GPIO_CRH_MODE9_1; //50 MHz
 
-	/* RX HI-Z input, 10MHz*/
+	/* RX HI-Z input*/
 	GPIOA->CRH &= ~GPIO_CRH_CNF10;  //Clear CNF10
 	GPIOA->CRH |= GPIO_CRH_CNF10_0; //HI_Z
 	GPIOA->CRH &= ~GPIO_CRH_MODE10; //Clear MODE <=> INPUT
 
-
-	USART1->BRR = 72000000/BaudRate;
+	USART1->BRR = (usartClock + baudRate/2)/baudRate;
 	USART1->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE |USART_CR1_RXNEIE|USART_CR1_TCIE;
 	NVIC_EnableIRQ(USART1_IRQn);
 }
-void TxString(char* str)
+
+void uartSendByte(char data)
 {
-	//enableUart();
-
-	char *p = str;
-	int i = 0;
-
+	while(!(USART1->SR & USART_SR_TXE));
+	USART1->DR=data;
+}
+void uartSendString(const char* str)
+{
+	const char *p = str;
 	while(*p)
 	{
-		Repeat:
-		if(USART1->SR && USART_SR_TXE)
-		{
-			USART1->DR = str[i];
-			i++;
-			p++;
-		}
-		else goto Repeat;
-
+		uartSendByte(*p);
+		++p;
 	}
 
 }
@@ -167,15 +171,135 @@ void initSwdOnlyDebugging()
 {
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // JTAG is disabled
 }
+
+// UART
+#define 	WAIT_HEAD 		0
+#define 	WAIT_TAIL 		1
+#define 	CHEK_MSG 		2
+#define 	TIME_OUT 		3
+#define 	U1RXBUF_SIZE	255
+
+uint8_t		uart1_rx_buf[U1RXBUF_SIZE];
+uint8_t		uart1_rx_bit;
+uint8_t		uart1_rx_status;
+uint32_t	number;
+uint8_t 	adress;
+uint8_t 	value;
+
+// RC522
+uint8_t		cardstr[MFRC522_MAX_LEN+1];												// MFRC522_MAX_LEN = 16
+uint8_t		lastID[4];
+
+uint8_t status;
+uint8_t card_data[17];
+uint32_t delay_val = 1000; //ms
+uint16_t result = 0;
+uint8_t UID[5];
+
+// a private key to scramble data writing/reading to/from RFID card:
+u_char Mx1[7][5]={{0x12,0x45,0xF2,0xA8},{0xB2,0x6C,0x39,0x83},{0x55,0xE5,0xDA,0x18},
+		{0x1F,0x09,0xCA,0x75},{0x99,0xA2,0x50,0xEC},{0x2C,0x88,0x7F,0x3D}};
+u_char SectorKey[7];
 int main(void)
 {
+	clockInit();
+	SysTick_Init(72000000);
 	enableUart();
 	initSwdOnlyDebugging();
-	initPortCClock();
-	SysTick_Init(72000000);
-	clockInit();
-	__enable_irq ();
+	__enable_irq();
+	uartSendString("**************************************************\r\n");
+	uartSendString("----- Example of communication with MFRC-522 -----\r\n");
 
+	initSPI1();
+	//
+	//	Display7segmentMax7219 d(SPI1, GPIOA, 4);
+	//	d.init(15, 8);
+	//	d.print(-82212);
+
+	MFRC522_Init();
+	status = MFRC522_ReadRegister(MFRC522_REG_VERSION);
+	char str1[32]={'\0'};
+	sprintf(str1,"Running RC522 ");
+	uartSendString(str1);
+	sprintf(str1,"ver: %x\r\n", status);
+	uartSendString(str1);
+	while(1)
+	{
+		NVIC_DisableIRQ (USART1_IRQn);
+		status = MFRC522_Request(PICC_REQIDL, cardstr);
+		if (status == MI_OK)
+		{
+			sprintf(str1,"Card:%x,%x,%x\r\n", cardstr[0], cardstr[1], cardstr[2]);
+			uartSendString(str1);
+			status = MFRC522_Anticoll(cardstr);
+			if (status == MI_OK)
+			{
+				sprintf(str1,"UID:%x %x %x %x\r\n", cardstr[0], cardstr[1], cardstr[2], cardstr[3]);
+				uartSendString(str1);
+				UID[0] = cardstr[0];
+				UID[1] = cardstr[1];
+				UID[2] = cardstr[2];
+				UID[3] = cardstr[3];
+				UID[4] = cardstr[4];
+				delayMs(1);
+				status = MFRC522_SelectTag(cardstr);
+				if (status > 0)
+				{
+					SectorKey[0] = ((Mx1[0][0])^(UID[0])) + ((Mx1[0][1])^(UID[1])) + ((Mx1[0][2])^(UID[2])) + ((Mx1[0][3])^(UID[3]));// 0x11; //KeyA[0]
+					SectorKey[1] = ((Mx1[1][0])^(UID[0])) + ((Mx1[1][1])^(UID[1])) + ((Mx1[1][2])^(UID[2])) + ((Mx1[1][3])^(UID[3]));// 0x11; //KeyA[0]
+					SectorKey[2] = ((Mx1[2][0])^(UID[0])) + ((Mx1[2][1])^(UID[1])) + ((Mx1[2][2])^(UID[2])) + ((Mx1[2][3])^(UID[3]));// 0x11; //KeyA[0]
+					SectorKey[3] = ((Mx1[3][0])^(UID[0])) + ((Mx1[3][1])^(UID[1])) + ((Mx1[3][2])^(UID[2])) + ((Mx1[3][3])^(UID[3]));// 0x11; //KeyA[0]
+					SectorKey[4] = ((Mx1[4][0])^(UID[0])) + ((Mx1[4][1])^(UID[1])) + ((Mx1[4][2])^(UID[2])) + ((Mx1[4][3])^(UID[3]));// 0x11; //KeyA[0]
+					SectorKey[5] = ((Mx1[5][0])^(UID[0])) + ((Mx1[5][1])^(UID[1])) + ((Mx1[5][2])^(UID[2])) + ((Mx1[5][3])^(UID[3]));// 0x11; //KeyA[0]
+					delayMs(1);
+					status = MFRC522_Auth(0x60, 3, SectorKey, cardstr);
+					if (status == MI_OK)
+					{
+						result++;
+						sprintf(str1, "Auth. OK");
+						uartSendString(str1);
+					}
+					else
+					{
+						for (int i = 0; i < 16; i++) {cardstr[i] = 0;}
+						status = 0;
+						// Find cards
+						delayMs(1);
+						status = MFRC522_Request(PICC_REQIDL, cardstr);
+						delayMs(1);
+						status = MFRC522_Anticoll(cardstr);
+						delayMs(1);
+						status = MFRC522_SelectTag(cardstr);
+						SectorKey[0] = 0xFF;
+						SectorKey[1] = 0xFF;
+						SectorKey[2] = 0xFF;
+						SectorKey[3] = 0xFF;
+						SectorKey[4] = 0xFF;
+						SectorKey[5] = 0xFF;
+						delayMs(1);
+						status = MFRC522_Auth(0x60, 3, SectorKey, cardstr);
+						if (status == MI_OK)
+						{
+						}
+					}
+				}
+			}
+			//MFRC522_StopCrypto1
+			number = hex_to_char(0);
+			//send_str("RC522 adress = ", 0);
+			//SendNum(number, 1);
+			adress = number;
+			value = MFRC522_ReadRegister(adress);
+			number = value;
+			//send_str("REG value = ", 0);
+			//SendNum(number, 2);
+			uart1_rx_buf[0] = 0;
+			uart1_rx_buf[1] = 0;
+			NVIC_EnableIRQ (USART1_IRQn);
+
+		}
+
+	}
 	//    /* Loop forever */
 	//	GPIOC->BSRR |= GPIO_BSRR_BS13; // pin C13 initially set
 	//	GPIOC->BRR |= GPIO_BRR_BR14; // pin C14 initially reset, GPIOC->BSRR |= GPIO_BSRR_BR14 also works
@@ -185,12 +309,10 @@ int main(void)
 	//		GPIOC->ODR^=GPIO_ODR_ODR13;
 	//		GPIOC->ODR^=GPIO_ODR_ODR14;
 	//
-	char str1[] = "Hello World! ";
-	TxString(str1);
+
+
 
 	char str2[] = "wwwTesting... 0,1,2,3... ";
-	TxString(str2);
+	uartSendString(str2);
 
-	strcpy(str1, "sraka\n\r");
-	TxString(str1);
 }
