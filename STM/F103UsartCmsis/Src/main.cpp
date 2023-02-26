@@ -221,7 +221,10 @@ int main(void)
 	char str1[32]={'\0'};
 	sprintf(str1,"Running RC522 ");
 	uartSendString(str1);
-	sprintf(str1,"ver: %x\r\n", status);
+
+	char buf[64]{0};
+	MFRC522_DumpVersionToSerial(status, buf);
+	sprintf(str1,"ver: %s\r\n", buf);
 	uartSendString(str1);
 	while(1)
 	{

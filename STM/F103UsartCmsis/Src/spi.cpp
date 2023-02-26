@@ -46,9 +46,26 @@ void initSPI1(void) {
 //	SPI1->CR2 |= SPI_CR2_SSOE; 		// NSS - ������������ ��� ����� ���������� slave select
 }
 
-uint8_t SPI1SendByte(uint8_t data) {
-	while (!(SPI1->SR & SPI_SR_TXE));      				// ���������, ��� ���������� �������� ��������� (STM32F103)
-	SPI1->DR=data;										// ����� � SPI1
-	while (!(SPI1->SR & SPI_SR_RXNE));     				// ���� ��������� ������ (STM32F103)
-	return SPI1->DR;		         					// ������ �������� ������
+//uint8_t SPI1SendByte(uint8_t data) {
+//	while (!(SPI1->SR & SPI_SR_TXE));      				// ���������, ��� ���������� �������� ��������� (STM32F103)
+//	SPI1->DR=data;										// ����� � SPI1
+//	while (!(SPI1->SR & SPI_SR_RXNE));     				// ���� ��������� ������ (STM32F103)
+//	return SPI1->DR;		         					// ������ �������� ������
+//}
+
+uint8_t SPI1sendData(uint8_t rg, uint8_t dt)
+{
+	SPI1_NSS_ON();
+
+	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	SPI1->DR = rg;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	(void) SPI1->DR;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	SPI1->DR = dt;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	(void) SPI1->DR;
+
+	SPI1_NSS_OFF();
+	return SPI1->DR;
 }

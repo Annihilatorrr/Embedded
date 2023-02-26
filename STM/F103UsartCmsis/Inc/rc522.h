@@ -7,13 +7,18 @@
 #define MI_ERR			2
 
 // MFRC522 Commands
-#define PCD_IDLE						0x00   // NO action; Cancel the current command
-#define PCD_AUTHENT						0x0E   // Authentication Key
-#define PCD_RECEIVE						0x08   // Receive Data
-#define PCD_TRANSMIT					0x04   // Transmit data
-#define PCD_TRANSCEIVE					0x0C   // Transmit and receive data,
-#define PCD_RESETPHASE					0x0F   // Reset
-#define PCD_CALCCRC						0x03   // CRC Calculate
+#define PCD_IDLE						0x00 // NO action; Cancel the current command
+#define PCD_MEM							0x01 // Stores 25 bytes into the internal buffer
+#define PCD_GENRATERANDOMID				0x02 // Generates a 10-byte random ID number
+#define PCD_CALCCRC						0x03 // Activates the CRC coprocessor or performs a self test
+#define PCD_TRANSMIT					0x04 // Transmit data
+#define PCD_NOCHANGE					0x07 // No command change, can be used to modify the CommandReg register bits without affecting the command,
+											 // for example, the PowerDown bit
+
+#define PCD_RECEIVE						0x08 // Activates the receiver circuits
+#define PCD_TRANSCEIVE					0x0C // Transmits data from FIFO buffer to antenna and automatically activates the receiver after transmission
+#define PCD_AUTHENT						0x0E // Performs the MIFARE standard authentication as a reader
+#define PCD_RESETPHASE					0x0F // Soft Reset
 
 // Mifare_One card command word
 #define PICC_REQIDL						0x26   // find the antenna area does not enter hibernation
@@ -108,6 +113,7 @@ extern uint8_t MFRC522_Compare(uint8_t * CardID, uint8_t * CompareID);
 extern void MFRC522_Init(void);
 extern void MFRC522_WriteRegister(uint8_t addr, uint8_t val);
 extern uint8_t MFRC522_ReadRegister(uint8_t addr);
+extern void MFRC522_DumpVersionToSerial(uint8_t version, char* buffer);
 extern void MFRC522_SetBitMask(uint8_t reg, uint8_t mask);
 extern void MFRC522_ClearBitMask(uint8_t reg, uint8_t mask);
 extern void MFRC522_AntennaOn(void);
@@ -122,5 +128,4 @@ extern uint8_t MFRC522_Auth(uint8_t authMode, uint8_t BlockAddr, uint8_t * Secto
 extern uint8_t MFRC522_Read(uint8_t blockAddr, uint8_t * recvData);
 extern uint8_t MFRC522_Write(uint8_t blockAddr, uint8_t * writeData);
 extern void MFRC522_Halt(void);
-extern void MFRC522_WriteReg(uint8_t address, uint8_t value);
 extern uint8_t MFRC522_ReadReg(uint8_t address);

@@ -19,6 +19,7 @@
 #include "stm32f1xx.h"
 #include "rc522.h"
 #include "spi.h"
+#include <string.h>
 
 void MFRC522_Init(void) {
 	MFRC522_Reset();
@@ -48,35 +49,61 @@ uint8_t MFRC522_Compare(uint8_t * CardID, uint8_t * CompareID) {
 	return MI_OK;
 }
 
-void MFRC522_WriteRegister(uint8_t addr, uint8_t val) {
-	addr = (addr << 1) & 0x7E;	// Address format: 0XXXXXX0 (7E = 0b01111110)
-    MFRC522_WriteReg(addr, val);
+void MFRC522_WriteRegister(uint8_t addr, uint8_t val)
+{
+	// LSB = 0 for addressing MFRC522
+	// For writing operation MSB = 0
+	addr = (addr << 1) & 0x7E;	// Address format: 0XXXXXX0 (0x7E = 0b01111110)
+	SPI1sendData(addr, val);
 }
 
-uint8_t MFRC522_ReadRegister(uint8_t addr) {
-	uint8_t val;
+uint8_t MFRC522_ReadRegister(uint8_t addr)
+{
+	// LSB = 0 for addressing MFRC522
+	// For reading operation MSB = 1
+	addr = ((addr << 1) & 0x7E) | 0x80; // 0x80 = 0b10000000
 
-	addr = ((addr << 1) & 0x7E) | 0x80;
-	val = MFRC522_ReadReg(addr);
+	// last byte while reading must be 0x00
+	uint8_t	val = SPI1sendData(addr, 0x00);
 	return val;	
 }
 
-void MFRC522_SetBitMask(uint8_t reg, uint8_t mask) {
+void MFRC522_DumpVersionToSerial(uint8_t version, char* buffer)
+{
+	switch(version)
+	{
+		case 0x88: strcpy(buffer, " = (clone)");  break;
+		case 0x90: strcpy(buffer, " = v0.0");     break;
+		case 0x91: strcpy(buffer, " = v1.0");     break;
+		case 0x92: strcpy(buffer, " = v2.0");     break;
+		case 0x12: strcpy(buffer, " = counterfeit chip"); break;
+		default:   strcpy(buffer, " = (unknown)");
+	}
+	// When 0x00 or 0xFF is returned, communication probably failed
+	if ((version == 0x00) || (version == 0xFF))
+		strcpy(buffer, "WARNING: Communication failure, is the MFRC522 properly connected?");
+} // End PCD_DumpVersionToSerial()
+
+void MFRC522_SetBitMask(uint8_t reg, uint8_t mask)
+{
 	MFRC522_WriteRegister(reg, MFRC522_ReadRegister(reg) | mask);
 }
 
-void MFRC522_ClearBitMask(uint8_t reg, uint8_t mask){
+void MFRC522_ClearBitMask(uint8_t reg, uint8_t mask)
+{
 	MFRC522_WriteRegister(reg, MFRC522_ReadRegister(reg) & (~mask));
 } 
 
-void MFRC522_AntennaOn(void) {
+void MFRC522_AntennaOn(void)
+{
 	uint8_t temp;
 
 	temp = MFRC522_ReadRegister(MFRC522_REG_TX_CONTROL);
 	if (!(temp & 0x03)) MFRC522_SetBitMask(MFRC522_REG_TX_CONTROL, 0x03);
 }
 
-void MFRC522_AntennaOff(void) {
+void MFRC522_AntennaOff(void)
+{
 	MFRC522_ClearBitMask(MFRC522_REG_TX_CONTROL, 0x03);
 }
 
@@ -84,7 +111,8 @@ void MFRC522_Reset(void) {
 	MFRC522_WriteRegister(MFRC522_REG_COMMAND, PCD_RESETPHASE);
 }
 
-uint8_t MFRC522_Request(uint8_t reqMode, uint8_t * TagType) {
+uint8_t MFRC522_Request(uint8_t reqMode, uint8_t * TagType)
+{
 	uint8_t status;  
 	uint16_t backBits;																				// The received data bits
 
@@ -95,7 +123,8 @@ uint8_t MFRC522_Request(uint8_t reqMode, uint8_t * TagType) {
 	return status;
 }
 
-uint8_t MFRC522_ToCard(uint8_t command, uint8_t * sendData, uint8_t sendLen, uint8_t * backData, uint16_t * backLen) {
+uint8_t MFRC522_ToCard(uint8_t command, uint8_t * sendData, uint8_t sendLen, uint8_t * backData, uint16_t * backLen)
+{
 	uint8_t status = MI_ERR;
 	uint8_t irqEn = 0x00;
 	uint8_t waitIRq = 0x00;
@@ -103,49 +132,62 @@ uint8_t MFRC522_ToCard(uint8_t command, uint8_t * sendData, uint8_t sendLen, uin
 	uint8_t n;
 	uint16_t i;
 
-	switch (command) {
-		case PCD_AUTHENT: {
-			irqEn = 0x12;
-			waitIRq = 0x10;
-			break;
-		}
-		case PCD_TRANSCEIVE: {
-			irqEn = 0x77;
-			waitIRq = 0x30;
-			break;
-		}
-		default:
+	switch (command)
+	{
+	case PCD_AUTHENT: //Certification cards close
+	{
+		irqEn = 0x12;
+		waitIRq = 0x10;
+		break;
+	}
+	case PCD_TRANSCEIVE: //Transmit FIFO data
+	{
+		irqEn = 0x77;
+		waitIRq = 0x30;
+		break;
+	}
+	default:
 		break;
 	}
 
-	MFRC522_WriteRegister(MFRC522_REG_COMM_IE_N, irqEn | 0x80);
-	MFRC522_ClearBitMask(MFRC522_REG_COMM_IRQ, 0x80);
-	MFRC522_SetBitMask(MFRC522_REG_FIFO_LEVEL, 0x80);
-	MFRC522_WriteRegister(MFRC522_REG_COMMAND, PCD_IDLE);
+	MFRC522_WriteRegister(MFRC522_REG_COMM_IE_N, irqEn | 0x80); //Interrupt request
+	MFRC522_ClearBitMask(MFRC522_REG_COMM_IRQ, 0x80); 			//Clear all interrupt request bit
+	MFRC522_SetBitMask(MFRC522_REG_FIFO_LEVEL, 0x80);			//FlushBuffer=1, FIFO Initialization
+	MFRC522_WriteRegister(MFRC522_REG_COMMAND, PCD_IDLE);		//NO action; Cancel the current command???
 
 	// Writing data to the FIFO
-	for (i = 0; i < sendLen; i++) MFRC522_WriteRegister(MFRC522_REG_FIFO_DATA, sendData[i]);
+	for (i = 0; i < sendLen; i++)
+	{
+		MFRC522_WriteRegister(MFRC522_REG_FIFO_DATA, sendData[i]);
+	}
 
 	// Execute the command
 	MFRC522_WriteRegister(MFRC522_REG_COMMAND, command);
-	if (command == PCD_TRANSCEIVE) MFRC522_SetBitMask(MFRC522_REG_BIT_FRAMING, 0x80);					// StartSend=1,transmission of data starts 
+	if (command == PCD_TRANSCEIVE)
+	{
+		MFRC522_SetBitMask(MFRC522_REG_BIT_FRAMING, 0x80);					// StartSend=1,transmission of data starts
+	}
 
 	// Waiting to receive data to complete
 	i = 2000;	// i according to the clock frequency adjustment, the operator M1 card maximum waiting time 25ms
-	do {
+	do
+	{
 		// CommIrqReg[7..0]
 		// Set1 TxIRq RxIRq IdleIRq HiAlerIRq LoAlertIRq ErrIRq TimerIRq
 		n = MFRC522_ReadRegister(MFRC522_REG_COMM_IRQ);
 		i--;
-	} while ((i!=0) && !(n&0x01) && !(n&waitIRq));
+	} while (( i!= 0) && !(n & 0x01) && !(n & waitIRq));
 
-	MFRC522_ClearBitMask(MFRC522_REG_BIT_FRAMING, 0x80);												// StartSend=0
+	MFRC522_ClearBitMask(MFRC522_REG_BIT_FRAMING, 0x80);	// StartSend=0
 
-	if (i != 0)  {
-		if (!(MFRC522_ReadRegister(MFRC522_REG_ERROR) & 0x1B)) {
+	if (i != 0)
+	{
+		if (!(MFRC522_ReadRegister(MFRC522_REG_ERROR) & 0x1B)) //BufferOvfl Collerr CRCErr ProtecolErr
+		{
 			status = MI_OK;
 			if (n & irqEn & 0x01) status = MI_NOTAGERR;
-			if (command == PCD_TRANSCEIVE) {
+			if (command == PCD_TRANSCEIVE)
+			{
 				n = MFRC522_ReadRegister(MFRC522_REG_FIFO_LEVEL);
 				lastBits = MFRC522_ReadRegister(MFRC522_REG_CONTROL) & 0x07;
 				if (lastBits) *backLen = (n - 1) * 8 + lastBits; else *backLen = n * 8;
@@ -158,7 +200,14 @@ uint8_t MFRC522_ToCard(uint8_t command, uint8_t * sendData, uint8_t sendLen, uin
 	return status;
 }
 
-uint8_t MFRC522_Anticoll(uint8_t * serNum) {
+/*
+ * Function Name: MFRC522_Anticoll
+ * Description: Anti-collision detection, reading selected card serial number card
+ * Input parameters: serNum - returns 4 bytes card serial number, the first 5 bytes for the checksum byte
+ * Return value: the successful return MI_OK
+ */
+uint8_t MFRC522_Anticoll(uint8_t * serNum)
+{
 	uint8_t status;
 	uint8_t i;
 	uint8_t serNumCheck = 0;
@@ -168,7 +217,8 @@ uint8_t MFRC522_Anticoll(uint8_t * serNum) {
 	serNum[0] = PICC_ANTICOLL;
 	serNum[1] = 0x20;
 	status = MFRC522_ToCard(PCD_TRANSCEIVE, serNum, 2, serNum, &unLen);
-	if (status == MI_OK) {
+	if (status == MI_OK)
+	{
 		// Check card serial number
 		for (i = 0; i < 4; i++) serNumCheck ^= serNum[i];
 		if (serNumCheck != serNum[i]) status = MI_ERR;
@@ -274,19 +324,3 @@ void MFRC522_Halt(void) {
 	MFRC522_ToCard(PCD_TRANSCEIVE, buff, 4, buff, &unLen);
 }
 
-void MFRC522_WriteReg(uint8_t address, uint8_t value) {
-	SPI1_NSS_ON();										// CS_Low
-	SPI1SendByte(address);
-	SPI1SendByte(value);
-	SPI1_NSS_OFF();										// CS_HIGH
-}
-
-uint8_t MFRC522_ReadReg(uint8_t address) {
-	uint8_t	val;
-
-	SPI1_NSS_ON();										// CS_Low
-	SPI1SendByte(address);
-	val = SPI1SendByte(0x00);
-	SPI1_NSS_OFF();										// CS_HIGH
-	return val;
-}

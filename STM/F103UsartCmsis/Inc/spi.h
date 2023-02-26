@@ -10,4 +10,5 @@
 #define 	SPI1_NSS_OFF()		GPIOA->BSRR = GPIO_BSRR_BS4
 
 extern void initSPI1(void);
-extern uint8_t SPI1SendByte(uint8_t data);
+//extern uint8_t SPI1SendByte(uint8_t data);
+extern uint8_t SPI1sendData(uint8_t rg, uint8_t dt);
