@@ -229,12 +229,12 @@ int main(void)
 		status = MFRC522_Request(PICC_REQIDL, cardstr);
 		if (status == MI_OK)
 		{
-			sprintf(str1,"Card:%x,%x,%x\r\n", cardstr[0], cardstr[1], cardstr[2]);
+			sprintf(str1,"Card: %x %x %x\r\n", cardstr[0], cardstr[1], cardstr[2]);
 			uartSendString(str1);
 			status = MFRC522_Anticoll(cardstr);
 			if (status == MI_OK)
 			{
-				sprintf(str1,"UID:%x %x %x %x\r\n", cardstr[0], cardstr[1], cardstr[2], cardstr[3]);
+				sprintf(str1,"UID: %x %x %x %x\r\n", cardstr[0], cardstr[1], cardstr[2], cardstr[3]);
 				uartSendString(str1);
 				UID[0] = cardstr[0];
 				UID[1] = cardstr[1];
@@ -298,6 +298,7 @@ int main(void)
 			NVIC_EnableIRQ (USART1_IRQn);
 
 		}
+		uartSendString("No RFID detected\r\n");
 
 	}
 	//    /* Loop forever */

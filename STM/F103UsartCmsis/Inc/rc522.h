@@ -122,3 +122,5 @@ extern uint8_t MFRC522_Auth(uint8_t authMode, uint8_t BlockAddr, uint8_t * Secto
 extern uint8_t MFRC522_Read(uint8_t blockAddr, uint8_t * recvData);
 extern uint8_t MFRC522_Write(uint8_t blockAddr, uint8_t * writeData);
 extern void MFRC522_Halt(void);
+extern void MFRC522_WriteReg(uint8_t address, uint8_t value);
+extern uint8_t MFRC522_ReadReg(uint8_t address);

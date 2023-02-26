@@ -11,5 +11,3 @@
 
 extern void initSPI1(void);
 extern uint8_t SPI1SendByte(uint8_t data);
-extern void SPI1_WriteReg(uint8_t address, uint8_t value);
-extern uint8_t SPI1_ReadReg(uint8_t address);

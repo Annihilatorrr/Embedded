@@ -52,20 +52,3 @@ uint8_t SPI1SendByte(uint8_t data) {
 	while (!(SPI1->SR & SPI_SR_RXNE));     				// ���� ��������� ������ (STM32F103)
 	return SPI1->DR;		         					// ������ �������� ������
 }
-
-void SPI1_WriteReg(uint8_t address, uint8_t value) {
-	SPI1_NSS_ON();										// CS_Low
-	SPI1SendByte(address);
-	SPI1SendByte(value);
-	SPI1_NSS_OFF();										// CS_HIGH
-}
-
-uint8_t SPI1_ReadReg(uint8_t address) {
-	uint8_t	val;
-
-	SPI1_NSS_ON();										// CS_Low
-	SPI1SendByte(address);
-	val = SPI1SendByte(0x00);
-	SPI1_NSS_OFF();										// CS_HIGH
-	return val;
-}

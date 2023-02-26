@@ -49,15 +49,15 @@ uint8_t MFRC522_Compare(uint8_t * CardID, uint8_t * CompareID) {
 }
 
 void MFRC522_WriteRegister(uint8_t addr, uint8_t val) {
-	addr = (addr << 1) & 0x7E;																		// Address format: 0XXXXXX0
-    SPI1_WriteReg(addr, val);
+	addr = (addr << 1) & 0x7E;	// Address format: 0XXXXXX0 (7E = 0b01111110)
+    MFRC522_WriteReg(addr, val);
 }
 
 uint8_t MFRC522_ReadRegister(uint8_t addr) {
 	uint8_t val;
 
 	addr = ((addr << 1) & 0x7E) | 0x80;
-	val = SPI1_ReadReg(addr);
+	val = MFRC522_ReadReg(addr);
 	return val;	
 }
 
@@ -272,4 +272,21 @@ void MFRC522_Halt(void) {
 	buff[1] = 0;
 	MFRC522_CalculateCRC(buff, 2, &buff[2]);
 	MFRC522_ToCard(PCD_TRANSCEIVE, buff, 4, buff, &unLen);
+}
+
+void MFRC522_WriteReg(uint8_t address, uint8_t value) {
+	SPI1_NSS_ON();										// CS_Low
+	SPI1SendByte(address);
+	SPI1SendByte(value);
+	SPI1_NSS_OFF();										// CS_HIGH
+}
+
+uint8_t MFRC522_ReadReg(uint8_t address) {
+	uint8_t	val;
+
+	SPI1_NSS_ON();										// CS_Low
+	SPI1SendByte(address);
+	val = SPI1SendByte(0x00);
+	SPI1_NSS_OFF();										// CS_HIGH
+	return val;
 }
