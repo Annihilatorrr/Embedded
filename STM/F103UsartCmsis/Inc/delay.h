@@ -1,6 +1,9 @@
 // STM32F103 SysTick_Config(72000) + IWDG
+#ifndef DELAY_H
+#define DELAY_H
 
-extern void initDelay(void);
-extern void Delay_ms(uint32_t nTime);
-extern void initIWDG(uint8_t prer, uint16_t rlr);
-extern void IWDG_Feed(void);
+extern volatile uint32_t sysTick;
+void delayMs(uint32_t ms);
+void SysTick_Init(int cpuFrequency);
+
+#endif

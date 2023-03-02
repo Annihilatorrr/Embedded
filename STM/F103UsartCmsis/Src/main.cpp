@@ -23,21 +23,14 @@
 #include "spi.h"
 #include "uart.h"
 #include "rc522.h"
+#include "delay.h"
+#include "mfrc522.h"
 #include "display7segmentmax7219.h"
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
-volatile uint32_t sysTick = 0;
-extern "C" void SysTick_Handler(void)
-{
-	if (sysTick > 0)
-	{
-		--sysTick;
-	}
-}
 uint32_t ReceiveData;
-
 extern "C" void USART1_IRQHandler(void)
 {
 	if (USART1->SR & USART_SR_RXNE) // функция-обработчик события «принят байт данных»
@@ -54,22 +47,6 @@ extern "C" void USART1_IRQHandler(void)
 	{
 		USART1->SR &= ~USART_SR_TC; //очищаем флаг события
 	}
-}
-
-void delayMs(uint32_t ms)
-{
-	sysTick = ms;
-	while (sysTick);
-}
-
-void SysTick_Init(int cpuFrequency) {
-	SysTick->LOAD &= ~SysTick_LOAD_RELOAD_Msk;
-	SysTick->LOAD = cpuFrequency/1000-1;
-	SysTick->VAL &= ~SysTick_VAL_CURRENT_Msk;
-	SysTick->CTRL = (SysTick_CTRL_TICKINT_Msk   |  /* Enable SysTick exception */
-			SysTick_CTRL_ENABLE_Msk) |    /* Enable SysTick system timer */
-					SysTick_CTRL_CLKSOURCE_Msk;   /* Use processor clock source */
-
 }
 
 void initPortCClock()
@@ -211,6 +188,16 @@ int main(void)
 	uartSendString("----- Example of communication with MFRC-522 -----\r\n");
 
 	initSPI1();
+	char str1[32]={'\0'};
+	MFRC522 mfrc522;//(SS_PIN, RST_PIN);
+	mfrc522.PCD_Init();
+	uint8_t version = mfrc522.PCD_ReadRegister(MFRC522::PCD_Register::VersionReg);
+	sprintf(str1,"Ver: %x\r\n", version);
+	 (mfrc522.PICC_ReadCardSerial());
+	{
+		strcpy(str1, reinterpret_cast<const char*>(mfrc522.uid.uidByte));
+		uartSendString(str1);
+	}
 	//
 	//	Display7segmentMax7219 d(SPI1, GPIOA, 4);
 	//	d.init(15, 8);
@@ -218,7 +205,7 @@ int main(void)
 
 	MFRC522_Init();
 	status = MFRC522_ReadRegister(MFRC522_REG_VERSION);
-	char str1[32]={'\0'};
+
 	sprintf(str1,"Running RC522 ");
 	uartSendString(str1);
 

@@ -152,7 +152,7 @@ void uartEndFlash() {
 	send_to_uart1('\r');		// 0x0D
 //	send_to_uart1('\n');		// 0x0A
 	//LED0_ON();
-	Delay_ms(10);
+	delayMs(10);
 	//LED0_OFF();
 	uart1_rx_bit = 0;
 	uart1_rx_status = WAIT_HEAD;

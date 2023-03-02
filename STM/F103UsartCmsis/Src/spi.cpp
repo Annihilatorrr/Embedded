@@ -39,11 +39,11 @@ void initSPI1(void) {
 	SPI1->CR1    |= SPI_CR1_SSM;	// ����������� ����� NSS
 	SPI1->CR1    |= SPI_CR1_SSI;	// ���������� ���������, ����� �� ����� NSS ������� �������
 	SPI1->CR1    |= SPI_CR1_SPE;	// ��������� ������ ������ SPI
-//	SPI1->CR1 &= ~SPI_CR1_CPOL; 	// ���������� ��������� ������� (CK to 0 when idle)
-//	SPI1->CR1 &= ~SPI_CR1_CPHA; 	// ���� ��������� ������� (|= SPI_CR1_CPHA - �� ������� ������)
-//	SPI1->CR1 |= SPI_CR1_DFF; 		// 16 ��� ������
-//	SPI1->CR1 &= ~SPI_CR1_LSBFIRST;	// ������� ��� (MSB) ���������� ������
-//	SPI1->CR2 |= SPI_CR2_SSOE; 		// NSS - ������������ ��� ����� ���������� slave select
+	//	SPI1->CR1 &= ~SPI_CR1_CPOL; 	// ���������� ��������� ������� (CK to 0 when idle)
+	//	SPI1->CR1 &= ~SPI_CR1_CPHA; 	// ���� ��������� ������� (|= SPI_CR1_CPHA - �� ������� ������)
+	//	SPI1->CR1 |= SPI_CR1_DFF; 		// 16 ��� ������
+	//	SPI1->CR1 &= ~SPI_CR1_LSBFIRST;	// ������� ��� (MSB) ���������� ������
+	//	SPI1->CR2 |= SPI_CR2_SSOE; 		// NSS - ������������ ��� ����� ���������� slave select
 }
 
 //uint8_t SPI1SendByte(uint8_t data) {
@@ -68,4 +68,43 @@ uint8_t SPI1sendData(uint8_t rg, uint8_t dt)
 
 	SPI1_NSS_OFF();
 	return SPI1->DR;
+}
+
+uint8_t SPI1sendData(uint8_t rg, uint8_t* dt, int count)
+{
+	SPI1_NSS_ON();
+
+	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	SPI1->DR = rg;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	(void) SPI1->DR;
+
+	for (uint8_t index = 0; index < count; index++)
+	{
+		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+		SPI1->DR = dt[index];
+		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		(void) SPI1->DR;
+	}
+	SPI1_NSS_OFF();
+	return SPI1->DR;
+}
+
+void SPI1receiveData(uint8_t rg, uint8_t* dt, int count)
+{
+	SPI1_NSS_ON();
+
+	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	SPI1->DR = rg;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	(void) SPI1->DR;
+	--count;
+	for (uint8_t index = 0; index < count; index++)
+	{
+		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+		SPI1->DR = rg;
+		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		dt[index] = SPI1->DR;
+	}
+	SPI1_NSS_OFF();
 }

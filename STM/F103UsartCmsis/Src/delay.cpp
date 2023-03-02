@@ -3,32 +3,27 @@
 #include "stm32f1xx.h"
 #include "delay.h"
 
-uint32_t 	TimingDelay;
+volatile uint32_t sysTick = 0;
 
-// ������ ���������� �� ��������� �������� ��� ������� 72 MHz
-void initDelay(void) {
-	SysTick_Config(72000);
+extern "C" void SysTick_Handler(void)
+{
+	if (sysTick > 0)
+	{
+		--sysTick;
+	}
 }
-// ���������� ���������� ���������� �������, ���������� ������ 1 ms
-void SysTick_Handler() {
-	if (TimingDelay != 0) TimingDelay--;
-}
-
-// ������� ��������� �������� � ������������
-void Delay_ms(uint32_t nTime) {
-	IWDG_Feed();								// Clear IWDG <3s
-	TimingDelay = nTime;
-	while (TimingDelay != 0);
+void delayMs(uint32_t ms)
+{
+	sysTick = ms;
+	while (sysTick);
 }
 
-// ��������� ������������ ����������� �������. ��������� �� 3s: prer=4, rlr=10100
-void initIWDG(uint8_t prer, uint16_t rlr) {
-	IWDG->KR = 0X5555;							// ���� ��� ������� � �������
-  	IWDG->PR = prer;  							// ���������� ������������
-  	IWDG->RLR = rlr;  							// ��������� ������� ������������, ���� ���� ���� �� ����� ��������
-	IWDG->KR = 0XAAAA;							// ������������
-  	IWDG->KR = 0XCCCC;							// ������ � ������
-}
+void SysTick_Init(int cpuFrequency) {
+	SysTick->LOAD &= ~SysTick_LOAD_RELOAD_Msk;
+	SysTick->LOAD = cpuFrequency/1000-1;
+	SysTick->VAL &= ~SysTick_VAL_CURRENT_Msk;
+	SysTick->CTRL = (SysTick_CTRL_TICKINT_Msk   |  /* Enable SysTick exception */
+			SysTick_CTRL_ENABLE_Msk) |    /* Enable SysTick system timer */
+					SysTick_CTRL_CLKSOURCE_Msk;   /* Use processor clock source */
 
-// Clear IWDG <3s
-void IWDG_Feed(void) {IWDG->KR=0XAAAA;}
+}

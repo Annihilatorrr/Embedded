@@ -12,3 +12,5 @@
 extern void initSPI1(void);
 //extern uint8_t SPI1SendByte(uint8_t data);
 extern uint8_t SPI1sendData(uint8_t rg, uint8_t dt);
+extern uint8_t SPI1sendData(uint8_t rg, uint8_t* dt, int count);
+extern void SPI1receiveData(uint8_t rg, uint8_t* dt, int count);
