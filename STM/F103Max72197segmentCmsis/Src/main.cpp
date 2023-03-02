@@ -164,7 +164,7 @@ int main(void)
 	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
 
-	Spi<Controller::f103> spi1(Spi<Controller::f103>::Spi1, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit16);
 	Display7segmentMax7219<Controller::f103> display1(&spi1);
 
 	display1.init(15, 8);
@@ -174,17 +174,18 @@ int main(void)
 	{
 		display1.clean();
 		display1.print(i);
-		delayMs(100);
+		delayMs(10);
 	}
 
-	Spi<Controller::f103> spi2(Spi<Controller::f103>::Spi2, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
 	Display7segmentMax7219<Controller::f103> display2(&spi2);
 	display2.init(15, 8);
 	display2.print(-82212);
 
-	for(int i = 0;i <= 200;++i)
+	for(int i = 101;i <= 200;++i)
 	{
 		display2.clean();
 		display2.print(i);
+		delayMs(10);
 	}
 }
