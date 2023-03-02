@@ -20,6 +20,8 @@
 #include "stm32f1xx.h"
 #include "display7segmentmax7219.h"
 #include "spi.h"
+#include "delay.h"
+
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
@@ -62,7 +64,9 @@ int clockInit(void)
 
 void spi1_init(void)
 {
-	GPIOA->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_MODE4 | GPIO_CRL_CNF5 | GPIO_CRL_MODE5 | GPIO_CRL_CNF6 | GPIO_CRL_MODE6 | GPIO_CRL_CNF7 | GPIO_CRL_MODE7);
+	auto reg = GPIOA->CRL;
+	reg &= ~(GPIO_CRL_CNF4 | GPIO_CRL_MODE4 | GPIO_CRL_CNF5 | GPIO_CRL_MODE5 | GPIO_CRL_CNF6 | GPIO_CRL_MODE6 | GPIO_CRL_CNF7 | GPIO_CRL_MODE7);
+	GPIOA->CRL = reg;
 
 	GPIOA->CRL   |=  GPIO_CRL_MODE7;  // output 50 MHz
 	GPIOA->CRL   &= ~GPIO_CRL_CNF7;	  // Push-Pull
@@ -120,7 +124,7 @@ void spi2_init(void)
 
 	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // enable spi clock
 
-	SPI2->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
+	SPI2->CR1 &= ~SPI_CR1_SPE; // disable SPI before configuring
 	SPI2->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
 			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
 			| SPI_CR1_SSM               //Software SS
@@ -128,9 +132,8 @@ void spi2_init(void)
 			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
 			| SPI_CR1_MSTR // Master mode
 			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
-			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
-
-	SPI2->CR1 |= SPI_CR1_SPE; // Enable SPI
+			| 0 << SPI_CR1_CPHA_Pos  // Clock phase
+			| SPI_CR1_SPE; // Enable SPI
 }
 
 //void initPortAClock()
@@ -158,9 +161,12 @@ void initSwdOnlyDebugging()
 int main(void)
 {
 	clockInit();
+	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
 
-	Display7segmentMax7219 display1(Spi<Controller::f103>::Spi1, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	Spi<Controller::f103> spi1(Spi<Controller::f103>::Spi1, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	Display7segmentMax7219<Controller::f103> display1(&spi1);
+
 	display1.init(15, 8);
 	display1.print(-82212);
 
@@ -168,9 +174,11 @@ int main(void)
 	{
 		display1.clean();
 		display1.print(i);
+		delayMs(100);
 	}
 
-	Display7segmentMax7219 display2(Spi<Controller::f103>::Spi2, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	Spi<Controller::f103> spi2(Spi<Controller::f103>::Spi2, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	Display7segmentMax7219<Controller::f103> display2(&spi2);
 	display2.init(15, 8);
 	display2.print(-82212);
 
