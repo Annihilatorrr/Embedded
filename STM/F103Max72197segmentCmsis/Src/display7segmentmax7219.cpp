@@ -7,24 +7,6 @@
 
 #include "display7segmentmax7219.h"
 
-uint8_t Display7segmentMax7219::SYMBOLS[] = {
-		0x7E,	// numeric 0
-		0x30,	// numeric 1
-		0x6D,	// numeric 2
-		0x79,	// numeric 3
-		0x33,	// numeric 4
-		0x5B,	// numeric 5
-		0x5F,	// numeric 6
-		0x70,	// numeric 7
-		0x7F,	// numeric 8
-		0x7B,	// numeric 9
-		0x01,	// minus
-		0x4F,	// letter E
-		0x37,	// letter H
-		0x0E,	// letter L
-		0x67,	// letter P
-		0x00	// blank
-};
 
 static uint32_t getPow10n(uint8_t n)
 {
@@ -80,19 +62,7 @@ void Display7segmentMax7219::clean(void){
 
 void Display7segmentMax7219::sendData(uint8_t rg, uint8_t dt)
 {
-	//GPIOB->BSRR = GPIO_PIN_12;GPIO_BSRR_BR12
-	//m_spiCsPort->ODR &= ~GPIO_ODR_ODR4;
-	m_spiCsPort->BSRR = 1 << m_spiCsPin;
-	while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-	m_spi->DR = rg;
-	while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-	(void) m_spi->DR;
-	while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-	m_spi->DR = dt;
-	while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-	(void) m_spi->DR;
-	//m_spiCsPort->ODR |= GPIO_ODR_ODR4;
-	m_spiCsPort->BSRR = 1 << m_spiCsPin << 16U;
+	m_spi.sendData(rg, dt);
 }
 
 void Display7segmentMax7219::printDigit(int position, Letters numeric, bool point)

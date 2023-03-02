@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include "stm32f1xx.h"
 #include "display7segmentmax7219.h"
-
+#include "spi.h"
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
@@ -133,106 +133,50 @@ void spi2_init(void)
 	SPI2->CR1 |= SPI_CR1_SPE; // Enable SPI
 }
 
-void spiXInit(uint8_t spiIndex, GPIO_TypeDef* port, uint8_t csPin, uint8_t clockPin, uint8_t misoPin, uint8_t mosiPin)
-{
-	SPI_TypeDef* spi = spiIndex == 1? SPI1:SPI2;
-	__IO uint32_t& csPortConfigRegister = csPin > 7 ? port->CRH : port->CRL;
-	__IO uint32_t& clockPortConfigRegister = clockPin > 7 ? port->CRH : port->CRL;
-	__IO uint32_t& misoPortConfigRegister = misoPin > 7 ? port->CRH : port->CRL;
-	__IO uint32_t& mosiPortConfigRegister = mosiPin > 7 ? port->CRH : port->CRL;
-
-	csPortConfigRegister &= ~((0b11 << (csPin%8*4+2)) | (0b11 << csPin%8*4) | (0b11 << (clockPin%8*4+2)) | (0b11 << clockPin%8*4) | (0b11 << (misoPin%8*4+2)) | (0b11 << misoPin%8*4) | (0b11 << (mosiPin%8*4+2)) | (0b11 << mosiPin%8*4));
-
-	mosiPortConfigRegister   |=  (0b11 << mosiPin%8*4);  // output 50 MHz (11)
-	mosiPortConfigRegister   &= ~(0b11 << (mosiPin%8*4+2));   // Push-Pull (00)
-	mosiPortConfigRegister   |=  (0b10 << (mosiPin%8*4+2)); // alternative function push-pull (10)
-
-	misoPortConfigRegister   &= ~(0b11 << misoPin%8*4);  // Input (00)
-	misoPortConfigRegister   |=  (0b10 << (misoPin%8*4+2)); // with pull-up / pull-down
-	port->BSRR   =  (1 << misoPin);   // Set bit 14 High
-
-	clockPortConfigRegister   |=  (0b11 << clockPin%8*4);  // output 50 MHz
-	clockPortConfigRegister   |=  (0b10 << (clockPin%8*4+2)); // alternative function push-pull
-
-	csPortConfigRegister   |=  (0b11 << csPin%8*4);  // output 50 MHz
-	csPortConfigRegister   &= ~(0b11 << (csPin%8*4+2));	  // Push-Pull General Purpose
-	port->BSRR  =   (1 << csPin);   // Set bit 12 High
-
-	spi->CR1 = 0x0000; // reset SPI configuration registers
-	spi->CR2 = 0x0000; // reset SPI configuration registers
-
-	if (spiIndex == 2)
-	{
-		RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // enable spi clock
-	}
-
-	if (spiIndex == 1)
-	{
-		RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // enable spi clock
-	}
-
-	spi->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
-	spi->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
-			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
-			| SPI_CR1_SSM               //Software SS
-			| SPI_CR1_SSI               // NSS (CS) pin is high
-			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
-			| SPI_CR1_MSTR // Master mode
-			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
-			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
-
-	spi->CR1 |= SPI_CR1_SPE; // Enable SPI
-}
-
-void initPortAClock()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-}
-
-void initPortBClock()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-}
-void initDmaClock()
-{
-	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
-}
+//void initPortAClock()
+//{
+//	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+//}
+//
+//void initPortBClock()
+//{
+//	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+//}
+//void initDmaClock()
+//{
+//	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+//}
 void initSwdOnlyDebugging()
 {
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // JTAG is disabled
 }
-void initAltFunctionsClock()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-}
+//void initAltFunctionsClock()
+//{
+//	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+//}
+
 int main(void)
 {
 	clockInit();
-	initPortAClock();
-	initPortBClock();
-	//initDmaClock();
 	initSwdOnlyDebugging();
-	initAltFunctionsClock();
-	//spi1_init();
-	spiXInit(1, GPIOA, 4, 5, 6, 7);
-	spiXInit(2, GPIOB, 12, 13, 14, 15);
-	Display7segmentMax7219 d(SPI1, GPIOA, 4);
-	d.init(15, 8);
-	d.print(-82212);
-	/* Loop forever */
-	for(int i = 0;i < 11;++i)
+
+	Display7segmentMax7219 display1(Spi<Controller::f103>::Spi1, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	display1.init(15, 8);
+	display1.print(-82212);
+
+	for(int i = 0;i <= 100;++i)
 	{
-		d.clean();
-		d.print(i);
+		display1.clean();
+		display1.print(i);
 	}
 
-	Display7segmentMax7219 d2(SPI2, GPIOB, 12);
-		d2.init(15, 8);
-		d2.print(-82212);
-		/* Loop forever */
-		for(int i = 0;i < 122;++i)
-		{
-			d2.clean();
-			d2.print(i);
-		}
+	Display7segmentMax7219 display2(Spi<Controller::f103>::Spi2, Spi<Controller::f103>::SpiFrameSize::Bit8);
+	display2.init(15, 8);
+	display2.print(-82212);
+
+	for(int i = 0;i <= 200;++i)
+	{
+		display2.clean();
+		display2.print(i);
+	}
 }
