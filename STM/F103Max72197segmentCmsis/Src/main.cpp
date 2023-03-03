@@ -216,7 +216,7 @@ int main(void)
 	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8);
 	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi1, 1, 4, 8);
 	lm.init();
-	lm.displayString("jopa");
+	lm.displayString("HELPMENOW");
 	char buf[4][8]{
 			{0x7f, 0x08, 0x08, 0x08, 0x7f, 0, 0, 0},
 			{0x7f, 0x49, 0x49, 0x49, 0x41, 0, 0, 0},
@@ -224,7 +224,12 @@ int main(void)
 			{0x7f, 0x09, 0x09, 0x09, 0x06, 0, 0, 0}
 		};
 
-	lm.test();
+	for (int i = 0; i < 100;++i)
+	{
+		lm.shiftLeft();
+	}
+
+	//lm.test();
 //	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
 //	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 //	for (int i = 0; i < 4; ++i)
