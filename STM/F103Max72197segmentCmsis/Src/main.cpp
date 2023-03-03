@@ -214,9 +214,49 @@ int main(void)
 //		}
 //	}
 	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8);
-	LedMatrixMax7219<Controller::f103> lm(&spi1, 1, 4, 8);
+	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi1, 1, 4, 8);
 	lm.init();
+	lm.displayString("jopa");
+	char buf[4][8]{
+			{0x7f, 0x08, 0x08, 0x08, 0x7f, 0, 0, 0},
+			{0x7f, 0x49, 0x49, 0x49, 0x41, 0, 0, 0},
+			{0x7f, 0x40, 0x40, 0x40, 0x40, 0, 0, 0},
+			{0x7f, 0x09, 0x09, 0x09, 0x06, 0, 0, 0}
+		};
+
 	lm.test();
+//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
+//	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+//	for (int i = 0; i < 4; ++i)
+//	{
+//		SPI1->DR = 1;
+//
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+//		(void) SPI1->DR;
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+//		SPI1->DR = buf[i][0];
+//
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+//		(void) SPI1->DR;
+//		while(SPI1->SR&SPI_SR_BSY) {}
+//	}
+//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
+//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+//	for (int i = 0; i < 4; ++i)
+//	{
+//		SPI1->DR = 2;
+//
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+//		(void) SPI1->DR;
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+//		SPI1->DR = buf[i][1];
+//
+//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+//		(void) SPI1->DR;
+//		while(SPI1->SR&SPI_SR_BSY) {}
+//	}
+//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
 	//	Display7segmentMax7219<Controller::f103> display1(&spi1);
 	//
 	//	display1.init(15, 8);
