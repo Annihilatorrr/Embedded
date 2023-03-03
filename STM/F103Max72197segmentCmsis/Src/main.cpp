@@ -19,7 +19,8 @@
 #include <stdint.h>
 #include "stm32f1xx.h"
 #include "display7segmentmax7219.h"
-#include "spi.h"
+#include "ledmatrixmax7219.h"
+//#include "spi.h"
 #include "delay.h"
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
@@ -62,7 +63,7 @@ int clockInit(void)
 	return 0;
 }
 
-void spi1_init(void)
+void initSpi1(void)
 {
 	auto reg = GPIOA->CRL;
 	reg &= ~(GPIO_CRL_CNF4 | GPIO_CRL_MODE4 | GPIO_CRL_CNF5 | GPIO_CRL_MODE5 | GPIO_CRL_CNF6 | GPIO_CRL_MODE6 | GPIO_CRL_CNF7 | GPIO_CRL_MODE7);
@@ -136,10 +137,10 @@ void spi2_init(void)
 			| SPI_CR1_SPE; // Enable SPI
 }
 
-//void initPortAClock()
-//{
-//	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-//}
+void initPortAClock()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+}
 //
 //void initPortBClock()
 //{
@@ -153,31 +154,82 @@ void initSwdOnlyDebugging()
 {
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // JTAG is disabled
 }
-//void initAltFunctionsClock()
-//{
-//	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-//}
 
+void initAltFunctionsClock()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+}
+
+void sendData(uint8_t address, uint8_t data)
+{
+	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
+	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+
+	SPI1->DR = address;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	(void) SPI1->DR;
+	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	SPI1->DR = data;
+
+	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	(void) SPI1->DR;
+	while(SPI1->SR&SPI_SR_BSY) {}
+	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
+}
+
+enum OperationCode: uint8_t
+{
+	OP_DECODEMODE = 9,	///< MAX72xx opcode for DECODE MODE
+	OP_INTENSITY = 10,	///< MAX72xx opcode for SET INTENSITY
+	OP_SCANLIMIT = 11,	///< MAX72xx opcode for SCAN LIMIT
+	OP_SHUTDOWN = 12,	///< MAX72xx opcode for SHUT DOWN
+	OP_DISPLAYTEST = 15	///< MAX72xx opcode for DISPLAY TEST
+};
 int main(void)
 {
 	clockInit();
 	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
+//	initPortAClock();
+//	initAltFunctionsClock();
+//	initSpi1();
+//	for (int i = 0; i < 4; ++i)
+//	{
+//		sendData(OperationCode::OP_DISPLAYTEST, 0x00);
+//	}
+//	for (int i = 0; i < 4; ++i)
+//		sendData(OperationCode::OP_SCANLIMIT, 0x0f);   //  scan limit = 8 LEDs
+//	for (int i = 0; i < 4; ++i)
+//		sendData(OperationCode::OP_INTENSITY, 0);       //  brightness intensity
+//	for (int i = 0; i < 4; ++i)
+//		sendData(OperationCode::OP_SHUTDOWN, 0x01);    //  power down = 0, normal mode = 1
+//	for (int i = 0; i < 4; ++i)
+//		sendData(OperationCode::OP_INTENSITY, 7);       //  brightness intensity
+//
+//	for (int i = 0; i < 4; ++i)
+//	{
+//		for (int i = 0; i <= 7; i++)
+//		{
+//			setColumn(i, 0);
+//		}
+//	}
+	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8);
+	LedMatrixMax7219<Controller::f103> lm(&spi1, 1, 4, 8);
+	lm.init();
+	lm.test();
+	//	Display7segmentMax7219<Controller::f103> display1(&spi1);
+	//
+	//	display1.init(15, 8);
+	//	display1.print(-82212);
+	//
+	//	for(int i = 0;i <= 100;++i)
+	//	{
+	//		display1.clean();
+	//		display1.print(i);
+	//		delayMs(10);
+	//	}
 
-	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit16);
-	Display7segmentMax7219<Controller::f103> display1(&spi1);
-
-	display1.init(15, 8);
-	display1.print(-82212);
-
-	for(int i = 0;i <= 100;++i)
-	{
-		display1.clean();
-		display1.print(i);
-		delayMs(10);
-	}
-
-	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
+	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit16);
 	Display7segmentMax7219<Controller::f103> display2(&spi2);
 	display2.init(15, 8);
 	display2.print(-82212);

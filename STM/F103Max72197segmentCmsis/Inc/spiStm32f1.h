@@ -132,7 +132,7 @@ public:
 
 	void sendData(uint8_t address, uint8_t data)
 	{
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
@@ -149,8 +149,60 @@ public:
 
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
+		while(m_spi->SR&SPI_SR_BSY) {}
+		m_port->BSRR = 1 << m_csPin; // CS SET
+	}
 
+	void sendData(uint8_t address, uint8_t* data, int dataLength)
+	{
 		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
+		{
+			for(int i = 0; i< dataLength; ++i)
+			{
+				m_spi->DR = address;
+				while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+				(void) m_spi->DR;
+				while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+				m_spi->DR = data[i];
+			}
+		}
+		else
+		{
+			for(int i = 0; i< dataLength; ++i)
+			{
+				m_spi->DR = (uint16_t)address << 8 | data[i];
+				while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+				(void) m_spi->DR;
+				while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+			}
+		}
+
+		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		(void) m_spi->DR;
+		while(m_spi->SR&SPI_SR_BSY) {}
+		m_port->BSRR = 1 << m_csPin; // CS SET
+	}
+
+	void sendByte(uint8_t data)
+	{
+		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
+		{
+			while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+			m_spi->DR = data;
+		}
+		else
+		{
+			m_spi->DR = (uint16_t)data << 8;
+		}
+
+		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		(void) m_spi->DR;
+		while(m_spi->SR&SPI_SR_BSY) {}
+		m_port->BSRR = 1 << m_csPin; // CS SET
 	}
 };
 
