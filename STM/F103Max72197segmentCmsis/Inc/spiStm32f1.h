@@ -42,7 +42,8 @@ private:
 		__IO uint32_t& misoPortConfigRegister = misoPin > 7 ? port->CRH : port->CRL;
 		__IO uint32_t& mosiPortConfigRegister = mosiPin > 7 ? port->CRH : port->CRL;
 
-		csPortConfigRegister &= ~((0b11 << (csPin%8*4+2)) | (0b11 << csPin%8*4) | (0b11 << (clockPin%8*4+2)) | (0b11 << clockPin%8*4) | (0b11 << (misoPin%8*4+2)) | (0b11 << misoPin%8*4) | (0b11 << (mosiPin%8*4+2)) | (0b11 << mosiPin%8*4));
+		uint32_t csPortConfigTemp = csPortConfigRegister & ~((0b11 << (csPin%8*4+2)) | (0b11 << csPin%8*4) | (0b11 << (clockPin%8*4+2)) | (0b11 << clockPin%8*4) | (0b11 << (misoPin%8*4+2)) | (0b11 << misoPin%8*4) | (0b11 << (mosiPin%8*4+2)) | (0b11 << mosiPin%8*4));
+		csPortConfigRegister = csPortConfigTemp;
 
 		mosiPortConfigRegister   |=  (0b11 << mosiPin%8*4);  // output 50 MHz (11)
 		mosiPortConfigRegister   &= ~(0b11 << (mosiPin%8*4+2));   // Push-Pull (00)
@@ -57,7 +58,7 @@ private:
 
 		csPortConfigRegister   |=  (0b11 << csPin%8*4);  // output 50 MHz
 		csPortConfigRegister   &= ~(0b11 << (csPin%8*4+2));	  // Push-Pull General Purpose
-		port->BSRR  =   (1 << csPin);   // Set bit 12 High
+		port->BSRR  =   (1 << csPin);   // Set bit High
 
 		m_spi->CR1 = 0x0000; // reset SPI configuration registers
 		m_spi->CR2 = 0x0000; // reset SPI configuration registers

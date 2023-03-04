@@ -189,7 +189,6 @@ void initSwdOnlyDebugging()
 void singleLedTest(SpiF103& spi)
 {
 	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi, 1, 4, 8);
-	lm.init();
 	for(int i = 0; i <= 7; ++i)
 	{
 		for(int j = 0; j < 8*4; ++j)
@@ -212,30 +211,122 @@ void singleLedTest(SpiF103& spi)
 void stringTest(SpiF103& spi)
 {
 	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi, 1, 4, 8);
-	lm.init();
-	lm.displayString("Test");
 	delayMs(5000);
-	char str[]{"VeryGoodTesting"};
-	lm.displayString(str);
-	for (auto i = 0U; i < (strlen(str)+4)*8;++i)
-	{
-		lm.shiftLeft();
-		delayMs(200);
-	}
+	char str[]{"Saturday"};
+	lm.shiftString(str, 30, 500);
+
+	char str2[]{"Very Good Testing"};
+	lm.shiftString(str2, 30, 500);
+
+	char str3[]{"04.03.2023"};
+	lm.shiftString(str3, 30, 500);
 }
 
 struct LedPoint
 {
-
+	uint32_t x;
+	uint32_t y;
 };
+
 class Snake
 {
-	uint8_t m_size;
+	LedMatrixMax7219<Controller::f103, 8, 4> _lm;
+	uint8_t m_currentSize;
+	uint32_t m_maxX;
+	uint32_t m_maxY;
+	LedPoint points[256]{};
+	LedPoint _m_initialPoint;
 
-public:
-	Snake(uint8_t size):m_size(size)
+	enum class DirectionOnMatrix
 	{
+		Left,
+		Top,
+		Right,
+		Bottom
+	};
 
+	DirectionOnMatrix m_currentDirection = DirectionOnMatrix::Left;
+public:
+	Snake(LedMatrixMax7219<Controller::f103, 8, 4>& lm, uint8_t initialSize, uint32_t maxX,	uint32_t maxY):
+		_lm(lm),
+		m_currentSize(initialSize),
+		m_maxX(maxX),
+		m_maxY(maxY)
+	{
+		_m_initialPoint = {maxX - m_currentSize + 1, 3};
+		for(int i = 0; i < m_currentSize; ++i)
+		{
+			points[i] = {_m_initialPoint.x+i, _m_initialPoint.y};
+			_lm.setLed(points[i].y, points[i].x);
+		}
+	}
+
+	void moveLeft()
+	{
+		if (m_currentDirection != DirectionOnMatrix::Right)
+		{
+			m_currentDirection = DirectionOnMatrix::Left;
+			_lm.resetLed(points[m_currentSize - 1].y, points[m_currentSize - 1].x);
+			for(int i = m_currentSize - 1; i >0; --i)
+			{
+				points[i] = points[i-1];
+				_lm.setLed(points[i].y, points[i].x);
+			}
+			points[0] = {--points[0].x, points[0].y};
+			_lm.setLed(points[0].y, points[0].x);
+
+		}
+	}
+
+	void moveRight()
+	{
+		if (m_currentDirection != DirectionOnMatrix::Left)
+		{
+			m_currentDirection = DirectionOnMatrix::Right;
+			_lm.resetLed(points[m_currentSize - 1].y, points[m_currentSize - 1].x);
+			for(int i = m_currentSize - 1; i >0; --i)
+			{
+				points[i] = points[i-1];
+				_lm.setLed(points[i].y, points[i].x);
+			}
+			points[0] = {++points[0].x, points[0].y};
+			_lm.setLed(points[0].y, points[0].x);
+
+		}
+	}
+
+	void moveTop()
+	{
+		if (m_currentDirection != DirectionOnMatrix::Bottom)
+		{
+			m_currentDirection = DirectionOnMatrix::Top;
+			_lm.resetLed(points[m_currentSize - 1].y, points[m_currentSize - 1].x);
+			for(int i = m_currentSize - 1; i >0; --i)
+			{
+				points[i] = points[i-1];
+				_lm.setLed(points[i].y, points[i].x);
+			}
+			points[0] = {points[0].x, ++points[0].y};
+			_lm.setLed(points[0].y, points[0].x);
+
+		}
+	}
+
+	void moveBottom()
+	{
+		if (m_currentDirection != DirectionOnMatrix::Top)
+		{
+			m_currentDirection = DirectionOnMatrix::Bottom;
+			_lm.resetLed(points[m_currentSize - 1].y, points[m_currentSize - 1].x);
+			for(int i = m_currentSize - 1; i >0; --i)
+			{
+				points[i] = points[i-1];
+				_lm.setLed(points[i].y, points[i].x);
+			}
+			points[0] = {points[0].x, --points[0].y};
+			_lm.setLed(points[0].y, points[0].x);
+
+		}
 	}
 };
 int main(void)
@@ -245,11 +336,53 @@ int main(void)
 	initSwdOnlyDebugging();
 
 	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8);
-	singleLedTest(spi1);
-	//stringTest(spi1);
+
+	int testCounter = 10;
+	while(testCounter--)
+	{
+		stringTest(spi1);
+	}
+	return 0;
 	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi1, 1, 4, 8);
-	lm.init();
-	lm.update();
+	Snake s(lm, 8, 31, 7);
+
+	int delayBetweenSteps = 1000;
+
+	s.moveLeft();
+	delayMs(delayBetweenSteps);
+	s.moveBottom();
+	delayMs(delayBetweenSteps);
+	s.moveLeft();
+	delayMs(delayBetweenSteps);
+	s.moveBottom();
+	delayMs(delayBetweenSteps);
+	for (int i = 0; i < 15; ++i)
+	{
+		s.moveLeft();
+		delayMs(delayBetweenSteps);
+	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		s.moveTop();
+		delayMs(delayBetweenSteps);
+	}
+
+	for (int i = 0; i < 17; ++i)
+	{
+		s.moveRight();
+		delayMs(delayBetweenSteps);
+	}
+
+	for (int i = 0; i < 3; ++i)
+	{
+		s.moveBottom();
+		delayMs(delayBetweenSteps);
+	}
+	//singleLedTest(spi1);
+	//stringTest(spi1);
+	//lm.init();
+	//lm.update();
 	//	initPortAClock();
 	//	initAltFunctionsClock();
 	//	initSpi1();
@@ -333,10 +466,10 @@ int main(void)
 	display2.init(15, 8);
 	display2.print(-82212);
 
-	for(int i = 101;i <= 200;++i)
+	for(int i = 1;i <= 100;++i)
 	{
 		display2.clean();
 		display2.print(i);
-		delayMs(10);
+		delayMs(500);
 	}
 }

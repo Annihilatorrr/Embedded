@@ -84,7 +84,7 @@ template <Controller controllerModel, int MatrixSize, int CascadeCount> class Le
 		{5, {0x08, 0x08, 0x3e, 0x08, 0x08, 0, 0, 0}},  // 43 - '+'
 		{3, {0x80, 0x70, 0x30, 0, 0, 0, 0, 0}},  // 44 - ','
 		{5, {0x08, 0x08, 0x08, 0x08, 0x08, 0, 0, 0}},  // 45 - '-'
-		{2, {0x61, 0x60, 0, 0, 0, 0, 0, 0}},  // 46 - '.'
+		{2, {0x60, 0x60, 0, 0, 0, 0, 0, 0}},  // 46 - '.'
 		{5, {0x20, 0x10, 0x08, 0x04, 0x02, 0, 0, 0}},  // 47 - '/'
 		{5, {0x3e, 0x51, 0x49, 0x45, 0x3e, 0, 0, 0}},  // 48 - '0'
 		{3, {0x42, 0x7f, 0x40, 0, 0, 0, 0, 0}},  // 49 - '1'
@@ -122,7 +122,7 @@ template <Controller controllerModel, int MatrixSize, int CascadeCount> class Le
 		{5, {0x3e, 0x41, 0x51, 0x21, 0x5e, 0, 0, 0}},// 81 - 'Q'
 		{5, {0x7f, 0x09, 0x19, 0x29, 0x46, 0, 0, 0}},// 82 - 'R'
 		{5, {0x26, 0x49, 0x49, 0x49, 0x32, 0, 0, 0}},// 83 - 'S'
-		{5, {0x03, 0x01, 0x7f, 0x01, 0x03, 0, 0, 0}},// 84 - 'T'
+		{5, {0b00000011, 0b00000001, 0b01111111, 0b00000001, 0b00000011, 0, 0, 0}},// 84 - 'T'
 		{5, {0x3f, 0x40, 0x40, 0x40, 0x3f, 0, 0, 0}},// 85 - 'U'
 		{5, {0x1f, 0x20, 0x40, 0x20, 0x1f, 0, 0, 0}},// 86 - 'V'
 		{5, {0x3f, 0x40, 0x38, 0x40, 0x3f, 0, 0, 0}},// 87 - 'W'
@@ -219,6 +219,25 @@ template <Controller controllerModel, int MatrixSize, int CascadeCount> class Le
 		}
 		sendData(transformedRow, sequenceOfRows, CascadeCount);
 	}
+
+	void init()
+	{
+		for (int i = 0; i < m_cascadeSize; ++i)
+		{
+			sendData(OperationCode::OP_DISPLAYTEST, 0x00);
+		}
+		for (int i = 0; i < m_cascadeSize; ++i)
+			sendData(OperationCode::OP_DECODEMODE, 0x00);  //  no decoding
+		for (int i = 0; i < m_cascadeSize; ++i)
+			sendData(OperationCode::OP_SCANLIMIT, 0x0f);   //  scan limit = 8 LEDs
+		for (int i = 0; i < m_cascadeSize; ++i)
+			sendData(OperationCode::OP_INTENSITY, 0);       //  brightness intensity
+		for (int i = 0; i < m_cascadeSize; ++i)
+			sendData(OperationCode::OP_SHUTDOWN, 0x01);    //  power down = 0, normal mode = 1
+		for (int i = 0; i < m_cascadeSize; ++i)
+			sendData(OperationCode::OP_INTENSITY, 7);       //  brightness intensity
+		clearDisplay();
+	}
 public:
 
 	enum OperationCode: uint8_t
@@ -233,21 +252,44 @@ public:
 	LedMatrixMax7219(Spi<controllerModel>* spi, int rows, int columns, int matrixSize):
 		m_spi(spi), m_rows(rows), m_columns(columns), m_matrixSize(matrixSize)
 	{
+		init();
+	}
 
-		auto r = SPI_OFFSET(0, 0);
-
+	Character rotate(const Character& ch)
+	{
+		Character temp;
+		temp.width = ch.width;
+		for(int i = 0; i < MatrixSize; ++i)
+		{
+			for(int j = 0; j < MatrixSize; ++j)
+			{
+				temp.rows[i] |= ((ch.rows[j] >> i & 1) << (MatrixSize - 1 -j));
+			}
+		}
+		return temp;
 	}
 
 	void displayString(const char* s)
 	{
+		memset(buf, 0, 256*sizeof(Character));
 		actualBufferLength = strlen(s);
 		for(int i = 0; s[i];++i)
 		{
-			buf[i] = characters[s[i]];
+			buf[i] = rotate(characters[static_cast<int>(s[i])]);
 		}
 		update();
 	}
 
+	void shiftString(const char* s, int frameDelay, int initialDelayMs = 1000)
+	{
+		displayString(s);
+		delayMs(initialDelayMs);
+		for (auto i = 0U; i < (strlen(s))*MatrixSize;++i)
+		{
+			shiftLeft();
+			delayMs(frameDelay);
+		}
+	}
 	void displayString(uint8_t s[], int dalaLength)
 	{
 		actualBufferLength = dalaLength;
@@ -275,7 +317,7 @@ public:
 	void shiftLeft()
 	{
 		int rowsInMatrix = m_matrixSize;
-		for (uint32_t i = 0; i < actualBufferLength + 0; ++i)
+		for (uint32_t i = 0; i < actualBufferLength; ++i)
 		{
 			for (int j = 0; j < rowsInMatrix;++j)
 			{
@@ -306,6 +348,9 @@ public:
 	}
 
 
+
+
+
 	void setLed(int row, int column)
 	{
 		setLedSate(row, column, true);
@@ -316,25 +361,7 @@ public:
 		setLedSate(row, column, false);
 	}
 
-	void init()
-	{
-		for (int i = 0; i < m_cascadeSize; ++i)
-		{
-			sendData(OperationCode::OP_DISPLAYTEST, 0x00);
-		}
-		for (int i = 0; i < m_cascadeSize; ++i)
-			sendData(OperationCode::OP_DECODEMODE, 0x00);  //  no decoding
-		for (int i = 0; i < m_cascadeSize; ++i)
-			sendData(OperationCode::OP_SCANLIMIT, 0x0f);   //  scan limit = 8 LEDs
-		for (int i = 0; i < m_cascadeSize; ++i)
-			sendData(OperationCode::OP_INTENSITY, 0);       //  brightness intensity
-		for (int i = 0; i < m_cascadeSize; ++i)
-			sendData(OperationCode::OP_SHUTDOWN, 0x01);    //  power down = 0, normal mode = 1
-		for (int i = 0; i < m_cascadeSize; ++i)
-			sendData(OperationCode::OP_INTENSITY, 7);       //  brightness intensity
-		clearDisplay();
 
-	}
 
 	void setColumn(uint8_t columnIndexInDisplay, uint8_t value)
 	{
