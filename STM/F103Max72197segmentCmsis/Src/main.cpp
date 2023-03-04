@@ -63,84 +63,84 @@ int clockInit(void)
 	return 0;
 }
 
-void initSpi1(void)
-{
-	auto reg = GPIOA->CRL;
-	reg &= ~(GPIO_CRL_CNF4 | GPIO_CRL_MODE4 | GPIO_CRL_CNF5 | GPIO_CRL_MODE5 | GPIO_CRL_CNF6 | GPIO_CRL_MODE6 | GPIO_CRL_CNF7 | GPIO_CRL_MODE7);
-	GPIOA->CRL = reg;
+//void initSpi1(void)
+//{
+//	auto reg = GPIOA->CRL;
+//	reg &= ~(GPIO_CRL_CNF4 | GPIO_CRL_MODE4 | GPIO_CRL_CNF5 | GPIO_CRL_MODE5 | GPIO_CRL_CNF6 | GPIO_CRL_MODE6 | GPIO_CRL_CNF7 | GPIO_CRL_MODE7);
+//	GPIOA->CRL = reg;
+//
+//	GPIOA->CRL   |=  GPIO_CRL_MODE7;  // output 50 MHz
+//	GPIOA->CRL   &= ~GPIO_CRL_CNF7;	  // Push-Pull
+//	GPIOA->CRL   |=  GPIO_CRL_CNF7_1; // alternative function push-pull
+//
+//	GPIOA->CRL   &= ~GPIO_CRL_MODE6;  // Input
+//	GPIOA->CRL   |=  GPIO_CRL_CNF6_1; // with pull-up / pull-down
+//	GPIOA->BSRR   =  GPIO_BSRR_BS6;   // Set bit 6 High
+//
+//	GPIOA->CRL   |=  GPIO_CRL_MODE5;  // output 50 MHz
+//	GPIOA->CRL   |=  GPIO_CRL_CNF5_1; // alternative function push-pull
+//
+//	GPIOA->CRL   |=  GPIO_CRL_MODE4;  // output 50 MHz
+//	GPIOA->CRL   &= ~GPIO_CRL_CNF4;	  // Push-Pull General Purpose
+//	GPIOA->BSRR   =  GPIO_BSRR_BS4;   // Set bit 4 High
+//
+//	SPI1->CR1 = 0x0000; // reset SPI configuration registers
+//	SPI1->CR2 = 0x0000; // reset SPI configuration registers
+//
+//	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // enable spi clock
+//	SPI1->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
+//	SPI1->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
+//			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
+//			| SPI_CR1_SSM               //Software SS
+//			| SPI_CR1_SSI               // NSS (CS) pin is high
+//			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
+//			| SPI_CR1_MSTR // Master mode
+//			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
+//			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
+//
+//	SPI1->CR1 |= SPI_CR1_SPE; // Enable SPI
+//}
+//
+//void spi2_init(void)
+//{
+//	GPIOB->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12 | GPIO_CRH_CNF13 | GPIO_CRH_MODE13 | GPIO_CRH_CNF14 | GPIO_CRH_MODE14 | GPIO_CRH_CNF15 | GPIO_CRH_MODE15);
+//
+//	GPIOB->CRH   |=  GPIO_CRH_MODE15;  // output 50 MHz (11)
+//	GPIOB->CRH   &= ~GPIO_CRH_CNF15;   // Push-Pull (00)
+//	GPIOB->CRH   |=  GPIO_CRH_CNF15_1; // alternative function push-pull (10)
+//
+//	GPIOB->CRH   &= ~GPIO_CRH_MODE14;  // Input (00)
+//	GPIOB->CRH   |=  GPIO_CRH_CNF14_1; // with pull-up / pull-down
+//	GPIOB->BSRR   =  GPIO_BSRR_BS14;   // Set bit 14 High
+//
+//	GPIOB->CRH   |=  GPIO_CRH_MODE13;  // output 50 MHz
+//	GPIOB->CRH   |=  GPIO_CRH_CNF13_1; // alternative function push-pull
+//
+//	GPIOB->CRH   |=  GPIO_CRH_MODE12;  // output 50 MHz
+//	GPIOB->CRH   &= ~GPIO_CRH_CNF12;	  // Push-Pull General Purpose
+//	GPIOB->BSRR   =  GPIO_BSRR_BS12;   // Set bit 12 High
+//
+//	SPI2->CR1 = 0x0000; // reset SPI configuration registers
+//	SPI2->CR2 = 0x0000; // reset SPI configuration registers
+//
+//	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // enable spi clock
+//
+//	SPI2->CR1 &= ~SPI_CR1_SPE; // disable SPI before configuring
+//	SPI2->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
+//			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
+//			| SPI_CR1_SSM               //Software SS
+//			| SPI_CR1_SSI               // NSS (CS) pin is high
+//			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
+//			| SPI_CR1_MSTR // Master mode
+//			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
+//			| 0 << SPI_CR1_CPHA_Pos  // Clock phase
+//			| SPI_CR1_SPE; // Enable SPI
+//}
 
-	GPIOA->CRL   |=  GPIO_CRL_MODE7;  // output 50 MHz
-	GPIOA->CRL   &= ~GPIO_CRL_CNF7;	  // Push-Pull
-	GPIOA->CRL   |=  GPIO_CRL_CNF7_1; // alternative function push-pull
-
-	GPIOA->CRL   &= ~GPIO_CRL_MODE6;  // Input
-	GPIOA->CRL   |=  GPIO_CRL_CNF6_1; // with pull-up / pull-down
-	GPIOA->BSRR   =  GPIO_BSRR_BS6;   // Set bit 6 High
-
-	GPIOA->CRL   |=  GPIO_CRL_MODE5;  // output 50 MHz
-	GPIOA->CRL   |=  GPIO_CRL_CNF5_1; // alternative function push-pull
-
-	GPIOA->CRL   |=  GPIO_CRL_MODE4;  // output 50 MHz
-	GPIOA->CRL   &= ~GPIO_CRL_CNF4;	  // Push-Pull General Purpose
-	GPIOA->BSRR   =  GPIO_BSRR_BS4;   // Set bit 4 High
-
-	SPI1->CR1 = 0x0000; // reset SPI configuration registers
-	SPI1->CR2 = 0x0000; // reset SPI configuration registers
-
-	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // enable spi clock
-	SPI1->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
-	SPI1->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
-			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
-			| SPI_CR1_SSM               //Software SS
-			| SPI_CR1_SSI               // NSS (CS) pin is high
-			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
-			| SPI_CR1_MSTR // Master mode
-			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
-			| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
-
-	SPI1->CR1 |= SPI_CR1_SPE; // Enable SPI
-}
-
-void spi2_init(void)
-{
-	GPIOB->CRH &= ~(GPIO_CRH_CNF12 | GPIO_CRH_MODE12 | GPIO_CRH_CNF13 | GPIO_CRH_MODE13 | GPIO_CRH_CNF14 | GPIO_CRH_MODE14 | GPIO_CRH_CNF15 | GPIO_CRH_MODE15);
-
-	GPIOB->CRH   |=  GPIO_CRH_MODE15;  // output 50 MHz (11)
-	GPIOB->CRH   &= ~GPIO_CRH_CNF15;   // Push-Pull (00)
-	GPIOB->CRH   |=  GPIO_CRH_CNF15_1; // alternative function push-pull (10)
-
-	GPIOB->CRH   &= ~GPIO_CRH_MODE14;  // Input (00)
-	GPIOB->CRH   |=  GPIO_CRH_CNF14_1; // with pull-up / pull-down
-	GPIOB->BSRR   =  GPIO_BSRR_BS14;   // Set bit 14 High
-
-	GPIOB->CRH   |=  GPIO_CRH_MODE13;  // output 50 MHz
-	GPIOB->CRH   |=  GPIO_CRH_CNF13_1; // alternative function push-pull
-
-	GPIOB->CRH   |=  GPIO_CRH_MODE12;  // output 50 MHz
-	GPIOB->CRH   &= ~GPIO_CRH_CNF12;	  // Push-Pull General Purpose
-	GPIOB->BSRR   =  GPIO_BSRR_BS12;   // Set bit 12 High
-
-	SPI2->CR1 = 0x0000; // reset SPI configuration registers
-	SPI2->CR2 = 0x0000; // reset SPI configuration registers
-
-	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // enable spi clock
-
-	SPI2->CR1 &= ~SPI_CR1_SPE; // disable SPI before configuring
-	SPI2->CR1 = 0 << SPI_CR1_DFF_Pos    // 8 bit Data frame format
-			| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
-			| SPI_CR1_SSM               //Software SS
-			| SPI_CR1_SSI               // NSS (CS) pin is high
-			| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
-			| SPI_CR1_MSTR // Master mode
-			| 0 << SPI_CR1_CPOL_Pos // Clock polarity
-			| 0 << SPI_CR1_CPHA_Pos  // Clock phase
-			| SPI_CR1_SPE; // Enable SPI
-}
-
-void initPortAClock()
-{
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-}
+//void initPortAClock()
+//{
+//	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+//}
 //
 //void initPortBClock()
 //{
@@ -154,114 +154,168 @@ void initSwdOnlyDebugging()
 {
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // JTAG is disabled
 }
+//
+//void initAltFunctionsClock()
+//{
+//	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+//}
+//
+//void sendData(uint8_t address, uint8_t data)
+//{
+//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
+//	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+//
+//	SPI1->DR = address;
+//	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+//	(void) SPI1->DR;
+//	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+//	SPI1->DR = data;
+//
+//	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+//	(void) SPI1->DR;
+//	while(SPI1->SR&SPI_SR_BSY) {}
+//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
+//}
 
-void initAltFunctionsClock()
+//enum OperationCode: uint8_t
+//{
+//	OP_DECODEMODE = 9,	///< MAX72xx opcode for DECODE MODE
+//	OP_INTENSITY = 10,	///< MAX72xx opcode for SET INTENSITY
+//	OP_SCANLIMIT = 11,	///< MAX72xx opcode for SCAN LIMIT
+//	OP_SHUTDOWN = 12,	///< MAX72xx opcode for SHUT DOWN
+//	OP_DISPLAYTEST = 15	///< MAX72xx opcode for DISPLAY TEST
+//};
+
+void singleLedTest(SpiF103& spi)
 {
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi, 1, 4, 8);
+	lm.init();
+	for(int i = 0; i <= 7; ++i)
+	{
+		for(int j = 0; j < 8*4; ++j)
+		{
+			lm.setLed(i, j);
+			delayMs(5);
+		}
+	}
+	delayMs(2000);
+	for(int i = 0; i <= 7; ++i)
+	{
+		for(int j = 0; j < 8*4; ++j)
+		{
+			lm.resetLed(i, j);
+			delayMs(5);
+		}
+	}
 }
 
-void sendData(uint8_t address, uint8_t data)
+void stringTest(SpiF103& spi)
 {
-	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
-	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-
-	SPI1->DR = address;
-	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-	(void) SPI1->DR;
-	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-	SPI1->DR = data;
-
-	while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-	(void) SPI1->DR;
-	while(SPI1->SR&SPI_SR_BSY) {}
-	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
+	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi, 1, 4, 8);
+	lm.init();
+	lm.displayString("Test");
+	delayMs(5000);
+	char str[]{"VeryGoodTesting"};
+	lm.displayString(str);
+	for (auto i = 0U; i < (strlen(str)+4)*8;++i)
+	{
+		lm.shiftLeft();
+		delayMs(200);
+	}
 }
 
-enum OperationCode: uint8_t
+struct LedPoint
 {
-	OP_DECODEMODE = 9,	///< MAX72xx opcode for DECODE MODE
-	OP_INTENSITY = 10,	///< MAX72xx opcode for SET INTENSITY
-	OP_SCANLIMIT = 11,	///< MAX72xx opcode for SCAN LIMIT
-	OP_SHUTDOWN = 12,	///< MAX72xx opcode for SHUT DOWN
-	OP_DISPLAYTEST = 15	///< MAX72xx opcode for DISPLAY TEST
+
+};
+class Snake
+{
+	uint8_t m_size;
+
+public:
+	Snake(uint8_t size):m_size(size)
+	{
+
+	}
 };
 int main(void)
 {
 	clockInit();
 	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
-//	initPortAClock();
-//	initAltFunctionsClock();
-//	initSpi1();
-//	for (int i = 0; i < 4; ++i)
-//	{
-//		sendData(OperationCode::OP_DISPLAYTEST, 0x00);
-//	}
-//	for (int i = 0; i < 4; ++i)
-//		sendData(OperationCode::OP_SCANLIMIT, 0x0f);   //  scan limit = 8 LEDs
-//	for (int i = 0; i < 4; ++i)
-//		sendData(OperationCode::OP_INTENSITY, 0);       //  brightness intensity
-//	for (int i = 0; i < 4; ++i)
-//		sendData(OperationCode::OP_SHUTDOWN, 0x01);    //  power down = 0, normal mode = 1
-//	for (int i = 0; i < 4; ++i)
-//		sendData(OperationCode::OP_INTENSITY, 7);       //  brightness intensity
-//
-//	for (int i = 0; i < 4; ++i)
-//	{
-//		for (int i = 0; i <= 7; i++)
-//		{
-//			setColumn(i, 0);
-//		}
-//	}
+
 	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8);
+	singleLedTest(spi1);
+	//stringTest(spi1);
 	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi1, 1, 4, 8);
 	lm.init();
-	lm.displayString("HELPMENOW");
-	char buf[4][8]{
-			{0x7f, 0x08, 0x08, 0x08, 0x7f, 0, 0, 0},
-			{0x7f, 0x49, 0x49, 0x49, 0x41, 0, 0, 0},
-			{0x7f, 0x40, 0x40, 0x40, 0x40, 0, 0, 0},
-			{0x7f, 0x09, 0x09, 0x09, 0x06, 0, 0, 0}
-		};
+	lm.update();
+	//	initPortAClock();
+	//	initAltFunctionsClock();
+	//	initSpi1();
+	//	for (int i = 0; i < 4; ++i)
+	//	{
+	//		sendData(OperationCode::OP_DISPLAYTEST, 0x00);
+	//	}
+	//	for (int i = 0; i < 4; ++i)
+	//		sendData(OperationCode::OP_SCANLIMIT, 0x0f);   //  scan limit = 8 LEDs
+	//	for (int i = 0; i < 4; ++i)
+	//		sendData(OperationCode::OP_INTENSITY, 0);       //  brightness intensity
+	//	for (int i = 0; i < 4; ++i)
+	//		sendData(OperationCode::OP_SHUTDOWN, 0x01);    //  power down = 0, normal mode = 1
+	//	for (int i = 0; i < 4; ++i)
+	//		sendData(OperationCode::OP_INTENSITY, 7);       //  brightness intensity
+	//
+	//	for (int i = 0; i < 4; ++i)
+	//	{
+	//		for (int i = 0; i <= 7; i++)
+	//		{
+	//			setColumn(i, 0);
+	//		}
+	//	}
+
+	//uint8_t str[]{uint8_t(127), uint8_t(127), uint8_t(96)};
+	//lm.displayString(str, 3);
 
 	for (int i = 0; i < 100;++i)
 	{
-		lm.shiftLeft();
+		//delayMs(50);
+		//lm.shiftLeft();
 	}
 
 	//lm.test();
-//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
-//	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-//	for (int i = 0; i < 4; ++i)
-//	{
-//		SPI1->DR = 1;
-//
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-//		(void) SPI1->DR;
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-//		SPI1->DR = buf[i][0];
-//
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-//		(void) SPI1->DR;
-//		while(SPI1->SR&SPI_SR_BSY) {}
-//	}
-//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
-//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-//	for (int i = 0; i < 4; ++i)
-//	{
-//		SPI1->DR = 2;
-//
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-//		(void) SPI1->DR;
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-//		SPI1->DR = buf[i][1];
-//
-//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-//		(void) SPI1->DR;
-//		while(SPI1->SR&SPI_SR_BSY) {}
-//	}
-//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
+	//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
+	//	while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	//	for (int i = 0; i < 4; ++i)
+	//	{
+	//		SPI1->DR = 1;
+	//
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	//		(void) SPI1->DR;
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	//		SPI1->DR = buf[i][0];
+	//
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	//		(void) SPI1->DR;
+	//		while(SPI1->SR&SPI_SR_BSY) {}
+	//	}
+	//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
+	//	GPIOA->BSRR = GPIO_BSRR_BR4; // CS LOW
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	//	for (int i = 0; i < 4; ++i)
+	//	{
+	//		SPI1->DR = 2;
+	//
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	//		(void) SPI1->DR;
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+	//		SPI1->DR = buf[i][1];
+	//
+	//		while(!(READ_BIT(SPI1->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+	//		(void) SPI1->DR;
+	//		while(SPI1->SR&SPI_SR_BSY) {}
+	//	}
+	//	GPIOA->BSRR = GPIO_BSRR_BS4;  // CS HIGH
 	//	Display7segmentMax7219<Controller::f103> display1(&spi1);
 	//
 	//	display1.init(15, 8);
