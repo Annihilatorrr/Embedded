@@ -8,35 +8,31 @@
 #ifndef LEDMATRIXMAX7219_H_
 #define LEDMATRIXMAX7219_H_
 
-#define	SPI_DATA_SIZE	(sizeof(uint8_t)*4*2)	///< Size of the SPI data buffers
-#define	SPI_OFFSET(i,x)	(((LAST_BUFFER-(i))*2)+(x))	///< SPI data offset for buffer i, digit x
-#define	FIRST_BUFFER	0						        ///< First buffer number
-#define	LAST_BUFFER		(4-1)			///< Last buffer number
-
 #include "stm32f1xx.h"
 #include "spi.h"
 #include "delay.h"
 #include <string.h>
 
-struct Character
+template <Controller controllerModel, int MatrixSize, int CascadeCount, int BufferSize = 1024> class LedMatrixMax7219
 {
-	int width{};
-	uint8_t rows[8]{};
-};
+	struct Character
+	{
+		int width{};
+		uint8_t rows[8]{};
+	};
 
-template <Controller controllerModel, int MatrixSize, int CascadeCount> class LedMatrixMax7219 {
 	Spi<controllerModel>* m_spi;
 	uint16_t m_spiCsPin;
 	uint8_t m_maxDigits;
 	int m_rows;
 	int m_columns;
-	int m_matrixSize = MatrixSize;
-	int m_cascadeSize = CascadeCount;
-	uint8_t buffer[80]{};
-	uint8_t buffer_row[80]{};
-	Character buf[256]{};
-	uint32_t actualBufferLength;
-	static constexpr Character characters[141]
+	const int m_matrixSize = MatrixSize;
+	const int m_cascadeCount = CascadeCount;
+
+	Character m_internalBuffer[BufferSize]{};
+	uint32_t m_actualBufferLength;
+
+	static constexpr Character characters[]
 										  {
 		{0, {0, 0, 0, 0, 0, 0, 0, 0}},  // 0 - 'Empty Cell'
 		{5, {0x3e, 0x5b, 0x4f, 0x5b, 0x3e, 0, 0, 0}}, // 1 - 'Sad Smiley'
@@ -191,11 +187,6 @@ template <Controller controllerModel, int MatrixSize, int CascadeCount> class Le
 		m_spi->sendData(rg, dt, dataLength);
 	}
 
-	void sendByte(uint8_t dt)
-	{
-		m_spi->sendByte(dt);
-	}
-
 	void setLedSate(int row, int column, bool on)
 	{
 		int transformedRow = MatrixSize - row;
@@ -203,39 +194,50 @@ template <Controller controllerModel, int MatrixSize, int CascadeCount> class Le
 		int columnInCascade = column - cascadeIndex*m_matrixSize;
 		int transformedColumn = MatrixSize - columnInCascade;
 		uint8_t sequenceOfRows[CascadeCount]{};
+
 		for(int i = 0; i <CascadeCount;++i)
 		{
-			sequenceOfRows[i] = buf[i].rows[transformedRow];
+			sequenceOfRows[i] = m_internalBuffer[i].rows[transformedRow];
 		}
 		if (on)
 		{
 			sequenceOfRows[cascadeIndex] |= 1 << (transformedColumn - 1);
-			buf[cascadeIndex].rows[transformedRow] = sequenceOfRows[cascadeIndex];
 		}
 		else
 		{
 			sequenceOfRows[cascadeIndex] &= ~(1 << (transformedColumn - 1));
-			buf[cascadeIndex].rows[transformedRow] = sequenceOfRows[cascadeIndex];
 		}
+		m_internalBuffer[cascadeIndex].rows[transformedRow] = sequenceOfRows[cascadeIndex];
 		sendData(transformedRow, sequenceOfRows, CascadeCount);
 	}
 
 	void init()
 	{
-		for (int i = 0; i < m_cascadeSize; ++i)
+		for (int i = 0; i < m_cascadeCount; ++i)
 		{
 			sendData(OperationCode::OP_DISPLAYTEST, 0x00);
 		}
-		for (int i = 0; i < m_cascadeSize; ++i)
+		for (int i = 0; i < m_cascadeCount; ++i)
+		{
 			sendData(OperationCode::OP_DECODEMODE, 0x00);  //  no decoding
-		for (int i = 0; i < m_cascadeSize; ++i)
+		}
+		for (int i = 0; i < m_cascadeCount; ++i)
+		{
 			sendData(OperationCode::OP_SCANLIMIT, 0x0f);   //  scan limit = 8 LEDs
-		for (int i = 0; i < m_cascadeSize; ++i)
+		}
+		for (int i = 0; i < m_cascadeCount; ++i)
+		{
 			sendData(OperationCode::OP_INTENSITY, 0);       //  brightness intensity
-		for (int i = 0; i < m_cascadeSize; ++i)
+		}
+		for (int i = 0; i < m_cascadeCount; ++i)
+		{
 			sendData(OperationCode::OP_SHUTDOWN, 0x01);    //  power down = 0, normal mode = 1
-		for (int i = 0; i < m_cascadeSize; ++i)
+		}
+		for (int i = 0; i < m_cascadeCount; ++i)
+		{
 			sendData(OperationCode::OP_INTENSITY, 7);       //  brightness intensity
+		}
+
 		clearDisplay();
 	}
 public:
@@ -271,11 +273,11 @@ public:
 
 	void displayString(const char* s)
 	{
-		memset(buf, 0, 256*sizeof(Character));
-		actualBufferLength = strlen(s);
+		memset(m_internalBuffer, 0, BufferSize*sizeof(Character));
+		m_actualBufferLength = strlen(s);
 		for(int i = 0; s[i];++i)
 		{
-			buf[i] = rotate(characters[static_cast<int>(s[i])]);
+			m_internalBuffer[i] = rotate(characters[static_cast<int>(s[i])]);
 		}
 		update();
 	}
@@ -292,10 +294,10 @@ public:
 	}
 	void displayString(uint8_t s[], int dalaLength)
 	{
-		actualBufferLength = dalaLength;
+		m_actualBufferLength = dalaLength;
 		for(int i = 0; i < dalaLength;++i)
 		{
-			buf[i] = characters[s[i]];
+			m_internalBuffer[i] = characters[s[i]];
 		}
 		update();
 	}
@@ -304,52 +306,32 @@ public:
 	{
 		for(int j = 0; j < m_matrixSize; ++j)
 		{
-			uint8_t bufrow[CascadeCount];
+			uint8_t visualBuffer[CascadeCount];
 			for(int i = 0; i <CascadeCount;++i)
 			{
-				bufrow[i] = buf[i].rows[j];
+				visualBuffer[i] = m_internalBuffer[i].rows[j];
 			}
-			sendData(j + 1, bufrow, CascadeCount);
+			sendData(j + 1, visualBuffer, CascadeCount);
 		}
 	}
-
 
 	void shiftLeft()
 	{
 		int rowsInMatrix = m_matrixSize;
-		for (uint32_t i = 0; i < actualBufferLength; ++i)
+		for (uint32_t i = 0; i < m_actualBufferLength; ++i)
 		{
 			for (int j = 0; j < rowsInMatrix;++j)
 			{
-				uint8_t& currentMatrixRow = buf[i].rows[j];
+				uint8_t& currentMatrixRow = m_internalBuffer[i].rows[j];
 				currentMatrixRow <<= 1;
 
-				auto carryFromNextCascade = ( (i < actualBufferLength - 1) && (buf[i+1].rows[j] & (1<<(m_matrixSize-1))));
-				if (carryFromNextCascade)
-				{
-					currentMatrixRow |= 1;
-				}
+				auto carryFromNextCascade = ( (i < m_actualBufferLength - 1) && (m_internalBuffer[i+1].rows[j] & (1<<(m_matrixSize-1))));
+				currentMatrixRow |= carryFromNextCascade;
 			}
 		}
 
 		update();
 	}
-	void setColumn(int columnIndex, char columnBits)
-	{
-		while(columnIndex >= 0)
-		{
-			for (int i = 0; i < m_matrixSize; i++)
-			{
-				sendData(i+1, (columnBits >> i)&1);
-			}
-			--columnIndex;
-		}
-
-	}
-
-
-
-
 
 	void setLed(int row, int column)
 	{
@@ -359,37 +341,6 @@ public:
 	void resetLed(int row, int column)
 	{
 		setLedSate(row, column, false);
-	}
-
-
-
-	void setColumn(uint8_t columnIndexInDisplay, uint8_t value)
-	{
-
-		int matrixIndex = columnIndexInDisplay >> 3;
-		int columnIndexInMatrix = columnIndexInDisplay % 8;
-
-		int matrixRightMostColumnIndex = matrixIndex<<3;
-
-		uint8_t store = value;
-		for (int i = 0; i < m_columns; ++i)
-		{
-			if (i != matrixIndex)
-			{
-				sendData(0, 0);
-			}
-			else
-			{
-				//for (int col=0+(8*n); col<8+(8*n); col++)  // uncomment this if the character looks inverted about X axis
-				for (int col = 7 + matrixRightMostColumnIndex; col >= matrixRightMostColumnIndex; --col)
-				{
-					bool b = value&0x80;
-					//setled(columnIndexInMatrix, col, b);
-					value<<=1;
-				}
-			}
-		}
-		buffer_row[columnIndexInDisplay] = store;
 	}
 
 	void clearDisplay()
@@ -402,37 +353,8 @@ public:
 				bufrow[i] = 0;
 			}
 			sendData(j + 1, bufrow, CascadeCount);
-
 		}
 	}
-
-
-	//	void setled(uint8_t row, uint8_t col, uint8_t value)
-	//	{
-	//		if (value)
-	//		{
-	//			buffer[col]= buffer[col] | (1UL << (row));
-	//		}
-	//		else
-	//		{
-	//			buffer[col] = buffer[col] & ~(1UL << (row));
-	//		}
-	//
-	//		int n = col >> 3;
-	//		int c = col % 8;
-	//		for (int i=0; i<m_columns; i++)
-	//		{
-	//			if (i == (m_columns-(n+1)))
-	//			{
-	//				sendData((c+1), buffer[col]);
-	//			}
-	//			else
-	//			{
-	//				sendData(0, 0);
-	//			}
-	//		}
-	//	}
 };
-
 
 #endif /* LEDMATRIXMAX7219_H_ */

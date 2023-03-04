@@ -168,7 +168,7 @@ public:
 				while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 				m_spi->DR = data[i];
 				while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-				while(SPI1->SR&SPI_SR_BSY) {}
+				while(m_spi->SR&SPI_SR_BSY) {}
 			}
 		}
 		else
@@ -179,7 +179,7 @@ public:
 				while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 				(void) m_spi->DR;
 				while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
-				while(SPI1->SR&SPI_SR_BSY) {}
+				while(m_spi->SR&SPI_SR_BSY) {}
 			}
 		}
 

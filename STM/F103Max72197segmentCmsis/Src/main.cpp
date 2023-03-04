@@ -335,7 +335,7 @@ int main(void)
 	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
 
-	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8);
+	SpiF103 spi1(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
 
 	int testCounter = 10;
 	while(testCounter--)
