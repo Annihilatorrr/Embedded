@@ -42,11 +42,12 @@ private:
 		__IO uint32_t& misoPortConfigRegister = misoPin > 7 ? port->CRH : port->CRL;
 		__IO uint32_t& mosiPortConfigRegister = mosiPin > 7 ? port->CRH : port->CRL;
 
+		// ~(GPIO_CRL_CNFX | GPIO_CRL_MODEX | GPIO_CRL_CNFX_+_1 | GPIO_CRL_MODEX_+_1 | GPIO_CRL_CNFX_+_2 | GPIO_CRL_MODEX_+_2 | GPIO_CRL_CNFX_+_3 | GPIO_CRL_MODEX_+_3);
 		uint32_t csPortConfigTemp = csPortConfigRegister & ~((0b11 << (csPin%8*4+2)) | (0b11 << csPin%8*4) | (0b11 << (clockPin%8*4+2)) | (0b11 << clockPin%8*4) | (0b11 << (misoPin%8*4+2)) | (0b11 << misoPin%8*4) | (0b11 << (mosiPin%8*4+2)) | (0b11 << mosiPin%8*4));
 		csPortConfigRegister = csPortConfigTemp;
 
-		mosiPortConfigRegister   |=  (0b11 << mosiPin%8*4);  // output 50 MHz (11)
-		mosiPortConfigRegister   &= ~(0b11 << (mosiPin%8*4+2));   // Push-Pull (00)
+		mosiPortConfigRegister   |=  (0b11 << mosiPin%8*4);  	// output, 50 MHz (11)
+		mosiPortConfigRegister   &= ~(0b11 << (mosiPin%8*4+2)); // Push-Pull (00)
 		mosiPortConfigRegister   |=  (0b10 << (mosiPin%8*4+2)); // alternative function push-pull (10)
 
 		misoPortConfigRegister   &= ~(0b11 << misoPin%8*4);  // Input (00)

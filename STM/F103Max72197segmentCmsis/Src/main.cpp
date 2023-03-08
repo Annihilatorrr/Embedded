@@ -152,6 +152,7 @@ int clockInit(void)
 //}
 void initSwdOnlyDebugging()
 {
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // JTAG is disabled
 }
 //
