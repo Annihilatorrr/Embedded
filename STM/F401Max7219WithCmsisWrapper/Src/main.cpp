@@ -100,23 +100,17 @@ int ClockInit(void)
 int main(void)
 {
 	ClockInit();
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-	GPIOC->MODER &= ~GPIO_MODER_MODE8;
-	GPIOC->MODER |= GPIO_MODER_MODE8_0;
-//	GPIOC->OTYPER &= ~(GPIO_OTYPER_OT_8);
-//	GPIOC->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR8;
-//	GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPDR8);
-//	GPIOC->BSRR = GPIO_BSRR_BS8;
-//	GPIOC->BSRR = GPIO_BSRR_BR8;
-//	GPIOC->BSRR = GPIO_BSRR_BS8;
-//	GPIOC->BSRR = GPIO_BSRR_BR8;
+
 	SpiF401 spi1(SpiF401::Spi1, SpiF401::SpiFrameSize::Bit8);
 	SpiF401 spi3(SpiF401::Spi3, SpiF401::SpiFrameSize::Bit8);
 
+	Display7segmentMax7219<Controller::f401> display1(&spi1);
+	display1.init(15, 8);
+	display1.print(98765);
+
 	Display7segmentMax7219<Controller::f401> display2(&spi3);
 	display2.init(15, 8);
-	display2.print(1235678);
+	display2.print(43210);
 	/* Loop forever */
 	for(;;);
 }
