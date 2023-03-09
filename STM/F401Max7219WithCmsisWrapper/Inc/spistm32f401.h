@@ -9,7 +9,15 @@
 #define SPISTM32F401_H_
 
 #include "controllerdef.h"
+
 #include "stm32f4xx.h"
+
+
+struct PortPinPair
+{
+	GPIO_TypeDef* port;
+	uint8_t pin;
+};
 
 template <Controller> class Spi;
 
@@ -19,11 +27,10 @@ public:
 	enum class SpiNumber{Spi1, Spi2, Spi3, Spi4};
 	enum class SpiFrameSize{Bit8, Bit16};
 private:
-	GPIO_TypeDef* m_port;
-	uint8_t m_csPin;
-	uint8_t m_clockPin;
-	uint8_t m_misoPin;
-	uint8_t m_mosiPin;
+	PortPinPair m_cs;
+	PortPinPair m_clock;
+	PortPinPair m_miso;
+	PortPinPair m_mosi;
 	SPI_TypeDef* m_spi;
 	Spi<Controller::f401>::SpiFrameSize m_frameSize;
 
@@ -173,13 +180,12 @@ private:
 	//		while(SPI1->SR & SPI_SR_BSY);         // make sure SPI isn't busy
 	//	}
 
-	void spiXInit(uint8_t spiIndex, GPIO_TypeDef* port, uint8_t csPin, uint8_t clockPin, uint8_t misoPin, uint8_t mosiPin, SpiFrameSize frameSize)
+	void spiXInit(uint8_t spiIndex, PortPinPair cs, PortPinPair clock, PortPinPair miso, PortPinPair mosi, SpiFrameSize frameSize)
 	{
-		m_port = port;
-		m_csPin = csPin;
-		m_clockPin = clockPin;
-		m_misoPin = misoPin;
-		m_mosiPin = mosiPin;
+		m_cs = cs;
+		m_miso = miso;
+		m_mosi = mosi;
+		m_clock = clock;
 
 		switch(spiIndex)
 		{
@@ -201,43 +207,50 @@ private:
 			break;
 		}
 
-		port->MODER &= ~(0x3UL << csPin*2 | // GPIO_MODER_MODERA
-				0x3UL << clockPin*2  | // GPIO_MODER_MODERB
-				0x3UL << misoPin*2 | // GPIO_MODER_MODERC
-				0x3UL << mosiPin*2 | // GPIO_MODER_MODERD
-				0x3UL << csPin*2 | // GPIO_OSPEEDER_OSPEEDRA
-				0x3UL << clockPin*2 |// GPIO_OSPEEDER_OSPEEDRB
-				0x3UL << misoPin*2|// GPIO_OSPEEDER_OSPEEDRC
-				0x3UL << mosiPin*2); // GPIO_OSPEEDER_OSPEEDRD
+		cs.port->MODER &= ~(0x3UL << cs.pin*2 | 0x3UL << cs.pin*2 );
+		miso.port->MODER &= ~(0x3UL << miso.pin*2 | 0x3UL << miso.pin*2 );
+		mosi.port->MODER &= ~(0x3UL << mosi.pin*2 | 0x3UL << mosi.pin*2 );
+		clock.port->MODER &= ~(0x3UL << clock.pin*2 | 0x3UL << clock.pin*2 );// GPIO_MODER_MODERA
 
-		port->MODER |= 0x2UL << mosiPin*2; //GPIO_MODER_MODERD_1 - AF output
-		port->OTYPER &= ~(0x1UL << mosiPin);
-		port->OSPEEDR |= 0x3UL << mosiPin*2;  //GPIO_OSPEEDER_OSPEEDRD
-		port->PUPDR &= ~(0x3UL << mosiPin*2);
+		mosi.port->MODER |= 0x2UL << mosi.pin*2; //GPIO_MODER_MODERD_1 - AF output
+		mosi.port->OTYPER &= ~(0x1UL << mosi.pin);
+		mosi.port->OSPEEDR |= 0x3UL << mosi.pin*2;  //GPIO_OSPEEDER_OSPEEDRD
+		mosi.port->PUPDR &= ~(0x3UL << mosi.pin*2);
 
-		port->MODER |= 0x2UL<< misoPin*2; //GPIO_MODER_MODERC_1; // input
-		port->OTYPER &= ~(0x1UL << misoPin);
-		port->PUPDR &= ~(0x3UL << misoPin*2);
+		miso.port->MODER |= 0x2UL<< miso.pin*2; //GPIO_MODER_MODERC_1; // input
+		miso.port->OTYPER &= ~(0x1UL << miso.pin);
+		miso.port->PUPDR &= ~(0x3UL << miso.pin*2);
 
-		port->MODER |= 0x2UL<< clockPin*2; //GPIO_MODER_MODERB_1; // AF output
-		port->OTYPER &= ~(0x1UL << clockPin);
-		port->OSPEEDR |= 0x3UL << clockPin*2;  //GPIO_OSPEEDER_OSPEEDRB
-		port->PUPDR &= ~(0x3UL << clockPin*2);
+		clock.port->MODER |= 0x2UL<< clock.pin*2; //GPIO_MODER_MODERB_1; // AF output
+		clock.port->OTYPER &= ~(0x1UL << clock.pin);
+		clock.port->OSPEEDR |= 0x3UL << clock.pin*2;  //GPIO_OSPEEDER_OSPEEDRB
+		clock.port->PUPDR &= ~(0x3UL << clock.pin*2);
 
-		port->MODER |= 0x1UL << csPin*2; //GPIO_MODER_MODERA_0; // general purpose output
-		port->OTYPER &= ~(0x1UL << csPin);
-		port->OSPEEDR |= 0x3UL << csPin*2;  //GPIO_OSPEEDER_OSPEEDRA
-		port->PUPDR &= ~(0x3UL << csPin*2);
-		port->BSRR = (1 << csPin); // CS initially set high
+		cs.port->MODER |= 0x1UL << cs.pin*2; //GPIO_MODER_MODERA_0; // general purpose output
+		cs.port->OTYPER &= ~(0x1UL << cs.pin);
+		cs.port->OSPEEDR |= 0x3UL << cs.pin*2;  //GPIO_OSPEEDER_OSPEEDRA
+		cs.port->PUPDR &= ~(0x3UL << cs.pin*2);
+		cs.port->BSRR = (1 << cs.pin); // CS initially set high
 
 		if (spiIndex == 1)
 		{
-			port->AFR[0] |= (5 << clockPin%8*4)|(5 << misoPin%8*4)|(5 << mosiPin%8*4);
+			clock.port->AFR[0] |= (5 << clock.pin%8*4);
+			miso.port->AFR[0] |= (5 << miso.pin%8*4);
+			mosi.port->AFR[0] |= (5 << mosi.pin%8*4);
+		}
+		if (spiIndex == 2)
+		{
+			clock.port->AFR[1] |= (5 << clock.pin%8*4);
+			miso.port->AFR[0] |= (5 << miso.pin%8*4);
+			mosi.port->AFR[0] |= (5 << mosi.pin%8*4);
 		}
 		if (spiIndex == 3)
 		{
-			port->AFR[1] |= (6 << clockPin%8*4)|(6 << misoPin%8*4)|(6 << mosiPin%8*4);
+			clock.port->AFR[1] |= (6 << clock.pin%8*4);
+			miso.port->AFR[1] |= (6 << miso.pin%8*4);
+			mosi.port->AFR[1] |= (6 << mosi.pin%8*4);
 		}
+
 		m_spi->CR1 = 0 << SPI_CR1_DFF_Pos // 8bit frame
 				| 0 << SPI_CR1_LSBFIRST_Pos      // MSB first
 				| 1 << SPI_CR1_SSM_Pos           // Software SS
@@ -272,13 +285,20 @@ private:
 	void initSpi1(Spi<Controller::f401>::SpiFrameSize frameSize)
 	{
 		initPortAClock();
-		spiXInit(1, GPIOA, 4, 5, 6, 7, frameSize);
+		spiXInit(1, PortPinPair{GPIOA, 4}, PortPinPair{GPIOA, 5}, PortPinPair{GPIOA, 6}, PortPinPair{GPIOA, 7}, frameSize);
+	}
+
+	void initSpi2(Spi<Controller::f401>::SpiFrameSize frameSize)
+	{
+		initPortBClock();
+		initPortCClock();
+		spiXInit(2, PortPinPair{GPIOC, 9}, PortPinPair{GPIOB, 10}, PortPinPair{GPIOC, 2}, PortPinPair{GPIOC, 3}, frameSize);
 	}
 
 	void initSpi3(Spi<Controller::f401>::SpiFrameSize frameSize)
 	{
 		initPortCClock();
-		spiXInit(3, GPIOC, 9, 10, 11, 12, frameSize);
+		spiXInit(3, {GPIOC, 9}, {GPIOC, 10}, {GPIOC, 11}, {GPIOC, 12}, frameSize);
 	}
 public:
 
@@ -290,6 +310,9 @@ public:
 		case SpiNumber::Spi1:
 			initSpi1(frameSize);
 			break;
+		case SpiNumber::Spi2:
+			initSpi2(frameSize);
+			break;
 		case SpiNumber::Spi3:
 			initSpi3(frameSize);
 			break;
@@ -299,7 +322,7 @@ public:
 
 	void sendData(uint8_t address, uint8_t data)
 	{
-		m_port->BSRR = 1 << (m_csPin + 16U);  // CS RESET
+		m_cs.port->BSRR = 1 << (m_cs.pin + 16U);  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f401>::SpiFrameSize::Bit8)
 		{
@@ -317,12 +340,12 @@ public:
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 
 	void sendData(uint8_t address, uint8_t* data, int dataLength)
 	{
-		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f401>::SpiFrameSize::Bit8)
 		{
@@ -352,12 +375,12 @@ public:
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 
 	void sendByte(uint8_t data)
 	{
-		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f401>::SpiFrameSize::Bit8)
 		{
@@ -372,7 +395,7 @@ public:
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 };
 

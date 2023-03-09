@@ -102,13 +102,14 @@ int main(void)
 	ClockInit();
 
 	SpiF401 spi1(SpiF401::SpiNumber::Spi1, SpiF401::SpiFrameSize::Bit8);
+	SpiF401 spi2(SpiF401::SpiNumber::Spi2, SpiF401::SpiFrameSize::Bit8);
 	SpiF401 spi3(SpiF401::SpiNumber::Spi3, SpiF401::SpiFrameSize::Bit8);
 
 	Display7segmentMax7219<Controller::f401> display1(&spi1);
 	display1.init(15, 8);
 	display1.print(987);
 
-	Display7segmentMax7219<Controller::f401> display2(&spi3);
+	Display7segmentMax7219<Controller::f401> display2(&spi2);
 	display2.init(15, 8);
 	display2.print(432);
 	/* Loop forever */
