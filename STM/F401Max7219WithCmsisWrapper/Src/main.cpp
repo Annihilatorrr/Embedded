@@ -34,69 +34,64 @@ int ClockInit(void)
 
 	//ЗАПУСК КВАРЦЕВОГО ГЕНЕРАТОРА:
 
-	RCC->CR |= (1<<RCC_CR_HSEON_Pos); //Запускаем генератор HSE
+	RCC->CR |= RCC_CR_HSEON; //Запускаем генератор HSE
 
 	//Ждем успешного запуска или окончания тайм-аута
 	for(StartUpCounter = 0; ; StartUpCounter++)
 	{
 		//Если успешно запустилось, то выходим из цикла
-		if(RCC->CR & (1<<RCC_CR_HSERDY_Pos)) break;
+		if(RCC->CR & RCC_CR_HSERDY) break;
 
 		//Если не запустилось, то отключаем все, что включили
 		if(StartUpCounter > 0x1000) RCC->CR &= ~(1<<RCC_CR_HSEON_Pos);
 	}
 
-	//НАСТРОЙКА И ЗАПУСК PLL:
-	//Частота кварца 8 MHz
-	//f_{PLL general clock output} = [(HSE_VALUE/PLLM)*PLLN]/PLLP
+	// HSE is PLL source
+	RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSE;
+	RCC->CR &= ~(RCC_CR_PLLON);
 
-	//Устанавливаем PLLM = 8 <---> (00 1000)
-	RCC->PLLCFGR |= (RCC_PLLCFGR_PLLM_3);
-	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM_1 | RCC_PLLCFGR_PLLM_2 | RCC_PLLCFGR_PLLM_5 | RCC_PLLCFGR_PLLM_0 | RCC_PLLCFGR_PLLM_4);
+	// set PLL P prescaler (0b00 = 2)
+	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLP);
 
-	//Устанавливаем PLLN = 144 <---> (0 1001 0000)
-	RCC->PLLCFGR |= (RCC_PLLCFGR_PLLN_4 | RCC_PLLCFGR_PLLN_7);
-	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLN_0 | RCC_PLLCFGR_PLLN_1 | RCC_PLLCFGR_PLLN_2 | RCC_PLLCFGR_PLLN_3 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_8);
+	// clear PLL N
+	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLN);
+	// set PLL N (0b101010000 = 336)
+	RCC->PLLCFGR |= (RCC_PLLCFGR_PLLN_4 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_8);
 
-	//Устанавливаем PLLP = 2 <---> (00)
-	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLP_0 | RCC_PLLCFGR_PLLP_1);
+	// clear PLL M
+	RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM);
+	// set PLL M prescaler (0b001000 = 8)
+	RCC->PLLCFGR |= RCC_PLLCFGR_PLLM_4;
 
-	RCC->PLLCFGR |= (1<<RCC_PLLCFGR_PLLSRC_Pos);   //Тактирование PLL от HSE
+	// AHB Prescaler (not divided)
+	RCC->CFGR &= ~(RCC_CFGR_HPRE);
+	RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
 
-	RCC->CR |= (1<<RCC_CR_PLLON_Pos);              //Запускаем PLL
+	//APB1 Prescaler (divide by 4)
+	RCC->CFGR &= ~(RCC_CFGR_PPRE1);
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
 
-	//Ждем успешного запуска или окончания тайм-аута
-	for(StartUpCounter = 0; ; StartUpCounter++)
-	{
-		if(RCC->CR & (1<<RCC_CR_PLLRDY_Pos)) break;
+	//APB2 Prescaler (divide by 2)
+	RCC->CFGR &= ~(RCC_CFGR_PPRE2);
+	RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;
 
-		if(StartUpCounter > 0x1000)
-		{
-			RCC->CR &= ~(1<<RCC_CR_HSEON_Pos);
-			RCC->CR &= ~(1<<RCC_CR_PLLON_Pos);
-		}
-	}
+	//PLL enable
+	RCC->CR |= RCC_CR_PLLON;
+	// Wait PLL is ready
+	while((RCC->CR & RCC_CR_PLLRDY) == 0) {} ;
 
-	// НАСТРОЙКА FLASH И ДЕЛИТЕЛЕЙ:
-
-	//Устанавливаем 2 цикла ожидания для Flash
-	FLASH->ACR |= (0x02<<FLASH_ACR_LATENCY_Pos);
-
-	RCC->CFGR |= (0x00<<RCC_CFGR_PPRE2_Pos) //Делитель шины APB2 равен 1
-		| (0x04<<RCC_CFGR_PPRE1_Pos)        //Делитель шины APB1 равен 2
-		| (0x00<<RCC_CFGR_HPRE_Pos);        //Делитель AHB равен 1
-
-
-	RCC->CFGR |= (0x02<<RCC_CFGR_SW_Pos);   //Переключаемся на работу от PLL
-
-	//Ждем, пока переключимся
-	while((RCC->CFGR & RCC_CFGR_SWS_Msk) != (0x02<<RCC_CFGR_SWS_Pos)){ }
+	FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN |FLASH_ACR_DCEN |FLASH_ACR_LATENCY_5WS;
+	//PLL System
+	RCC->CFGR &= ~RCC_CFGR_SW;
+	RCC->CFGR |= RCC_CFGR_SW_PLL;
+	while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {};
 
 	//После того, как переключились на внешний источник такирования отключаем внутренний RC-генератор (HSI) для экономии энергии
 	RCC->CR &= ~(1<<RCC_CR_HSION_Pos);
 
 	return 0;
 }
+
 int main(void)
 {
 	ClockInit();
