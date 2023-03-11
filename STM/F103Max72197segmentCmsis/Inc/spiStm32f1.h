@@ -18,48 +18,62 @@ template <> class Spi<Controller::f103> {
 public:
 	enum SpiNumber{Spi1, Spi2};
 	enum SpiFrameSize{Bit8, Bit16};
+
+	struct PortPinPair
+	{
+		GPIO_TypeDef* port;
+		uint8_t pin;
+	};
+
 private:
 	GPIO_TypeDef* m_port;
-	uint8_t m_csPin;
-	uint8_t m_clockPin;
-	uint8_t m_misoPin;
-	uint8_t m_mosiPin;
+	PortPinPair m_cs;
+	PortPinPair m_clock;
+	PortPinPair m_miso;
+	PortPinPair m_mosi;
 	SPI_TypeDef* m_spi;
 	Spi<Controller::f103>::SpiFrameSize m_frameSize;
 
-	void spiXInit(uint8_t spiIndex, GPIO_TypeDef* port, uint8_t csPin, uint8_t clockPin, uint8_t misoPin, uint8_t mosiPin, SpiFrameSize frameSize)
+	void spiXInit(uint8_t spiIndex, PortPinPair cs, PortPinPair clock, PortPinPair miso, PortPinPair mosi, SpiFrameSize frameSize)
 	{
-		m_port = port;
-		m_csPin = csPin;
-		m_clockPin = clockPin;
-		m_misoPin = misoPin;
-		m_mosiPin = mosiPin;
+		m_cs = cs;
+		m_miso = miso;
+		m_mosi = mosi;
+		m_clock = clock;
 
 		m_spi = spiIndex == 1 ? SPI1:SPI2;
 
-		__IO uint32_t& csPortConfigRegister = csPin > 7 ? port->CRH : port->CRL;
-		__IO uint32_t& clockPortConfigRegister = clockPin > 7 ? port->CRH : port->CRL;
-		__IO uint32_t& misoPortConfigRegister = misoPin > 7 ? port->CRH : port->CRL;
-		__IO uint32_t& mosiPortConfigRegister = mosiPin > 7 ? port->CRH : port->CRL;
+		__IO uint32_t& csPortConfigRegister = cs.pin > 7 ? cs.port->CRH : cs.port->CRL;
+		__IO uint32_t& clockPortConfigRegister = clock.pin > 7 ? clock.port->CRH : clock.port->CRL;
+		__IO uint32_t& misoPortConfigRegister = miso.pin > 7 ? miso.port->CRH : miso.port->CRL;
+		__IO uint32_t& mosiPortConfigRegister = mosi.pin > 7 ? mosi.port->CRH : mosi.port->CRL;
 
 		// ~(GPIO_CRL_CNFX | GPIO_CRL_MODEX | GPIO_CRL_CNFX_+_1 | GPIO_CRL_MODEX_+_1 | GPIO_CRL_CNFX_+_2 | GPIO_CRL_MODEX_+_2 | GPIO_CRL_CNFX_+_3 | GPIO_CRL_MODEX_+_3);
-		uint32_t csPortConfigTemp = csPortConfigRegister & ~((0b11 << (csPin%8*4+2)) | (0b11 << csPin%8*4) | (0b11 << (clockPin%8*4+2)) | (0b11 << clockPin%8*4) | (0b11 << (misoPin%8*4+2)) | (0b11 << misoPin%8*4) | (0b11 << (mosiPin%8*4+2)) | (0b11 << mosiPin%8*4));
+		uint32_t csPortConfigTemp = csPortConfigRegister &
+				~((0b11 << (cs.pin%8*4+2)) |
+				(0b11 << cs.pin%8*4) |
+				(0b11 << (clock.pin%8*4+2)) |
+				(0b11 << clock.pin%8*4) |
+				(0b11 << (miso.pin%8*4+2)) |
+				(0b11 << miso.pin%8*4) |
+				(0b11 << (mosi.pin%8*4+2)) |
+				(0b11 << mosi.pin%8*4));
 		csPortConfigRegister = csPortConfigTemp;
 
-		mosiPortConfigRegister   |=  (0b11 << mosiPin%8*4);  	// output, 50 MHz (11)
-		mosiPortConfigRegister   &= ~(0b11 << (mosiPin%8*4+2)); // Push-Pull (00)
-		mosiPortConfigRegister   |=  (0b10 << (mosiPin%8*4+2)); // alternative function push-pull (10)
+		mosiPortConfigRegister   |=  (0b11 << mosi.pin%8*4);  	// output, 50 MHz (11)
+		mosiPortConfigRegister   &= ~(0b11 << (mosi.pin%8*4+2)); // Push-Pull (00)
+		mosiPortConfigRegister   |=  (0b10 << (mosi.pin%8*4+2)); // alternative function push-pull (10)
 
-		misoPortConfigRegister   &= ~(0b11 << misoPin%8*4);  // Input (00)
-		misoPortConfigRegister   |=  (0b10 << (misoPin%8*4+2)); // with pull-up / pull-down
-		port->BSRR   =  (1 << misoPin);   // Set bit 14 High
+		misoPortConfigRegister   &= ~(0b11 << miso.pin%8*4);  // Input (00)
+		misoPortConfigRegister   |=  (0b10 << (miso.pin%8*4+2)); // with pull-up / pull-down
+		miso.port->BSRR   =  (1 << miso.pin);   // Set bit 14 High
 
-		clockPortConfigRegister   |=  (0b11 << clockPin%8*4);  // output 50 MHz
-		clockPortConfigRegister   |=  (0b10 << (clockPin%8*4+2)); // alternative function push-pull
+		clockPortConfigRegister   |=  (0b11 << clock.pin%8*4);  // output 50 MHz
+		clockPortConfigRegister   |=  (0b10 << (clock.pin%8*4+2)); // alternative function push-pull
 
-		csPortConfigRegister   |=  (0b11 << csPin%8*4);  // output 50 MHz
-		csPortConfigRegister   &= ~(0b11 << (csPin%8*4+2));	  // Push-Pull General Purpose
-		port->BSRR  =   (1 << csPin);   // Set bit High
+		csPortConfigRegister   |=  (0b11 << cs.pin%8*4);  // output 50 MHz
+		csPortConfigRegister   &= ~(0b11 << (cs.pin%8*4+2));	  // Push-Pull General Purpose
+		cs.port->BSRR  =   (1 << cs.pin);   // Set bit High
 
 		m_spi->CR1 = 0x0000; // reset SPI configuration registers
 		m_spi->CR2 = 0x0000; // reset SPI configuration registers
@@ -106,14 +120,14 @@ private:
 	{
 		initAltFunctionsClock();
 		initPortAClock();
-		spiXInit(1, GPIOA, 4, 5, 6, 7, frameSize);
+		spiXInit(1, PortPinPair{GPIOA, 4}, PortPinPair{GPIOA, 5}, PortPinPair{GPIOA,6}, PortPinPair{GPIOA,7}, frameSize);
 	}
 
 	void initSpi2(Spi<Controller::f103>::SpiFrameSize frameSize)
 	{
 		initAltFunctionsClock();
 		initPortBClock();
-		spiXInit(2, GPIOB, 12, 13, 14, 15, frameSize);
+		spiXInit(2, PortPinPair{GPIOB, 12}, PortPinPair{GPIOB,13}, PortPinPair{GPIOB,14}, PortPinPair{GPIOB,15}, frameSize);
 	}
 public:
 
@@ -134,7 +148,7 @@ public:
 
 	void sendData(uint8_t address, uint8_t data)
 	{
-		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
@@ -152,12 +166,12 @@ public:
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 
 	void sendData(uint8_t address, uint8_t* data, int dataLength)
 	{
-		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
@@ -187,12 +201,12 @@ public:
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 
 	void sendByte(uint8_t data)
 	{
-		m_port->BSRR = 1 << m_csPin << 16U;  // CS RESET
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
@@ -207,7 +221,7 @@ public:
 		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
-		m_port->BSRR = 1 << m_csPin; // CS SET
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 };
 
