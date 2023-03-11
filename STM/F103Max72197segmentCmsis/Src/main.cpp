@@ -27,6 +27,8 @@
 #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+
+
 int clockInit(void)
 
 {
@@ -330,6 +332,32 @@ public:
 		}
 	}
 };
+SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8, false, false);
+
+volatile uint32_t sysTick = 0;
+volatile uint32_t msTicks = 0;
+
+bool checkKeys = false;
+extern "C" void SysTick_Handler(void)
+{
+	++msTicks;
+	if (sysTick > 0)
+	{
+		--sysTick;
+	}
+	if (checkKeys && msTicks%250)
+	{
+		uint8_t keys = 0, key_mas[4];
+					spi2.readData(0x42, key_mas, 4);
+					keys = (key_mas[3]&0x11) << 3 | (key_mas[2]&0x11) << 2 | (key_mas[1]&0x11) << 1 | (key_mas[0]&0x11);
+					for(int start = 0;start < 8; start ++)
+					{
+						spi2.sendData(0xC1+start*2, keys&0x01);
+						keys >>= 1;
+					}
+	}
+}
+
 int main(void)
 {
 	clockInit();
@@ -359,7 +387,7 @@ int main(void)
 			0x6F  // 9
 	};
 
-	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8, false, false);
+
 
 	// init
 	uint8_t brightness = 7;
@@ -390,17 +418,17 @@ int main(void)
 		{
 			stringTest(spi1);
 		}
-
+		checkKeys = true;
 	while(1){
-		uint8_t keys = 0, key_mas[4];
-			spi2.readData(0x42, key_mas, 4);
-			keys = (key_mas[3]&0x11) << 3 | (key_mas[2]&0x11) << 2 | (key_mas[1]&0x11) << 1 | (key_mas[0]&0x11);
-			for(int start = 0;start < 8; start ++)
-			{
-				spi2.sendData(0xC1+start*2, keys&0x01);
-				keys >>= 1;
-			}
-			delayMs(1000);
+//		uint8_t keys = 0, key_mas[4];
+//			spi2.readData(0x42, key_mas, 4);
+//			keys = (key_mas[3]&0x11) << 3 | (key_mas[2]&0x11) << 2 | (key_mas[1]&0x11) << 1 | (key_mas[0]&0x11);
+//			for(int start = 0;start < 8; start ++)
+//			{
+//				spi2.sendData(0xC1+start*2, keys&0x01);
+//				keys >>= 1;
+//			}
+//			delayMs(1000);
 	}
 	//	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
 	//

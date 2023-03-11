@@ -3,15 +3,6 @@
 #include "stm32f1xx.h"
 #include "delay.h"
 
-volatile uint32_t sysTick = 0;
-
-extern "C" void SysTick_Handler(void)
-{
-	if (sysTick > 0)
-	{
-		--sysTick;
-	}
-}
 void delayMs(uint32_t ms)
 {
 	sysTick = ms;
