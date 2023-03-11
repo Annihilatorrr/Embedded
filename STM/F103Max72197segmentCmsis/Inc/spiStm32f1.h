@@ -53,13 +53,13 @@ private:
 		// ~(GPIO_CRL_CNFX | GPIO_CRL_MODEX | GPIO_CRL_CNFX_+_1 | GPIO_CRL_MODEX_+_1 | GPIO_CRL_CNFX_+_2 | GPIO_CRL_MODEX_+_2 | GPIO_CRL_CNFX_+_3 | GPIO_CRL_MODEX_+_3);
 		uint32_t csPortConfigTemp = csPortConfigRegister &
 				~((0b11 << (cs.pin%8*4+2)) |
-				(0b11 << cs.pin%8*4) |
-				(0b11 << (clock.pin%8*4+2)) |
-				(0b11 << clock.pin%8*4) |
-				(0b11 << (miso.pin%8*4+2)) |
-				(0b11 << miso.pin%8*4) |
-				(0b11 << (mosi.pin%8*4+2)) |
-				(0b11 << mosi.pin%8*4));
+						(0b11 << cs.pin%8*4) |
+						(0b11 << (clock.pin%8*4+2)) |
+						(0b11 << clock.pin%8*4) |
+						(0b11 << (miso.pin%8*4+2)) |
+						(0b11 << miso.pin%8*4) |
+						(0b11 << (mosi.pin%8*4+2)) |
+						(0b11 << mosi.pin%8*4));
 		csPortConfigRegister = csPortConfigTemp;
 
 		mosiPortConfigRegister   |=  (0b11 << mosi.pin%8*4);  	// output, 50 MHz (11)
@@ -92,14 +92,14 @@ private:
 
 		m_spi->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
 		m_spi->CR1 = (frameSize == SpiFrameSize::Bit8 ? (0 << SPI_CR1_DFF_Pos):SPI_CR1_DFF)    // 8 bit Data frame format
-				| (m_msbFirst ? 0 << SPI_CR1_LSBFIRST_Pos:SPI_CR1_LSBFIRST)//  MSB transferred first
-				| (m_fullDuplex ? 0 << SPI_CR1_BIDIMODE_Pos:SPI_CR1_BIDIMODE)
-				| SPI_CR1_SSM               //Software SS
-				| SPI_CR1_SSI               // NSS (CS) pin is high
-				| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
-				| SPI_CR1_MSTR // Master mode
-				| 0 << SPI_CR1_CPOL_Pos // Clock polarity
-				| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
+						| (m_msbFirst ? 0 << SPI_CR1_LSBFIRST_Pos:SPI_CR1_LSBFIRST)//  MSB transferred first
+						| (m_fullDuplex ? (0 << SPI_CR1_BIDIMODE_Pos):(1 << SPI_CR1_BIDIMODE_Pos))
+						| SPI_CR1_SSM               //Software SS
+						| SPI_CR1_SSI               // NSS (CS) pin is high
+						| SPI_CR1_BR  //Baud: F_PCLK/16
+						| SPI_CR1_MSTR // Master mode
+						| 0 << SPI_CR1_CPOL_Pos // Clock polarity
+						| 0 << SPI_CR1_CPHA_Pos;  // Clock phase
 
 		m_spi->CR1 |= SPI_CR1_SPE; // Enable SPI
 	}
@@ -136,8 +136,8 @@ public:
 
 	Spi(Spi<Controller::f103>::SpiNumber spiNumber, Spi<Controller::f103>::SpiFrameSize frameSize, bool msbFirst, bool fullDuplex):
 		m_frameSize(frameSize)
-	    , m_msbFirst(msbFirst)
-		, m_fullDuplex(fullDuplex)
+	, m_msbFirst(msbFirst)
+	, m_fullDuplex(fullDuplex)
 	{
 		switch(spiNumber)
 		{
@@ -154,11 +154,14 @@ public:
 	void sendData(uint8_t address, uint8_t data)
 	{
 		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
+		if (!m_fullDuplex)
+		{
+			m_spi->CR1 |= SPI_CR1_BIDIOE;
+		}
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
 			m_spi->DR = address;
-			while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
 			(void) m_spi->DR;
 			while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 			m_spi->DR = data;
@@ -168,26 +171,83 @@ public:
 			m_spi->DR = (uint16_t)address << 8 | data;
 		}
 
-		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
+	}
+
+	void readData(uint8_t send, uint8_t *data_mas, uint8_t count){
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
+		uint8_t i = 1;
+
+		if (!m_fullDuplex)
+		{
+			m_spi->CR1 |= SPI_CR1_BIDIOE;
+		}
+		m_spi->DR = send; 			 // �������� ������
+
+		while (!(m_spi->SR & SPI_SR_TXE)); // �������� ��������� ��������
+		while ((m_spi->SR & SPI_SR_BSY));
+
+		m_spi->CR1 &= ~SPI_CR1_BIDIOE; // ������������ � ����� ������. ��� ���� ����� ���������� 8 �������� ���������
+
+		while (!(m_spi->SR & SPI_SR_RXNE));
+		while ((m_spi->SR & SPI_SR_BSY));
+
+		data_mas[0] = m_spi->DR; // �������� ���������� ������ �� �������� SPI
+
+		while(count-- > 1){ // ��������� ����������� ���������� ���
+
+			m_spi->DR = 0xFF; // ������ � ������� ������ � ������ ������ �������������� �������� ������������
+
+			while (!(m_spi->SR & SPI_SR_RXNE));
+			while ((m_spi->SR & SPI_SR_BSY));
+
+			data_mas[i++] = m_spi->DR;
+		}
+		if (!m_fullDuplex)
+		{
+			m_spi->CR1 |= SPI_CR1_BIDIOE;
+		}
+		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
+	}
+
+	void sendData(uint8_t* data, int dataLength)
+	{
+		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
+		if (!m_fullDuplex)
+		{
+			m_spi->CR1 |= SPI_CR1_BIDIOE;
+		}
+
+		for(int i = 0; i< dataLength; ++i)
+		{
+			while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
+			m_spi->DR = data[i];
+		}
+		while(m_spi->SR&SPI_SR_BSY) {}
+
+
 		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
 	}
 
 	void sendData(uint8_t address, uint8_t* data, int dataLength)
 	{
 		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
+		if (!m_fullDuplex)
+		{
+			m_spi->CR1 |= SPI_CR1_BIDIOE;
+		}
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
 			for(int i = 0; i< dataLength; ++i)
 			{
 				m_spi->DR = address;
-				while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
-				(void) m_spi->DR;
 				while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 				m_spi->DR = data[i];
-				while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+				while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 				while(m_spi->SR&SPI_SR_BSY) {}
 			}
 		}
@@ -203,7 +263,7 @@ public:
 			}
 		}
 
-		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
 		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET
@@ -212,6 +272,10 @@ public:
 	void sendByte(uint8_t data)
 	{
 		m_cs.port->BSRR = 1 << m_cs.pin << 16U;  // CS RESET
+		if (!m_fullDuplex)
+		{
+			m_spi->CR1 |= SPI_CR1_BIDIOE;
+		}
 		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		if (m_frameSize == Spi<Controller::f103>::SpiFrameSize::Bit8)
 		{
@@ -223,7 +287,7 @@ public:
 			m_spi->DR = (uint16_t)data << 8;
 		}
 
-		while(!(READ_BIT(m_spi->SR, SPI_SR_RXNE) == (SPI_SR_RXNE))) {}
+		while(!(READ_BIT(m_spi->SR, SPI_SR_TXE) == (SPI_SR_TXE))) {}
 		(void) m_spi->DR;
 		while(m_spi->SR&SPI_SR_BSY) {}
 		m_cs.port->BSRR = 1 << m_cs.pin; // CS SET

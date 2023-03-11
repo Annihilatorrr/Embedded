@@ -335,51 +335,112 @@ int main(void)
 	clockInit();
 	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
+	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8, true, true);
+//	Display7segmentMax7219<Controller::f103> display2(&spi1);
+//	display2.init(7, 8);
+//	display2.print(-82212);
+//
+//	for(int i = 1;i <= 10;++i)
+//	{
+//		display2.clean();
+//		display2.print(i);
+//		delayMs(100);
+//	}
+	uint8_t sym_mas[10] = { // ������ ���� ��� ����������
+			0x3F, // 0
+			0x06, // 1
+			0x5B, // 2
+			0x4F, // 3
+			0x66, // 4
+			0x6D, // 5
+			0x7D, // 6
+			0x07, // 7
+			0x7F, // 8
+			0x6F  // 9
+	};
 
-//	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
-//
-//	int testCounter = 10;
-//	while(testCounter--)
-//	{
-//		stringTest(spi2);
-//	}
-//	return 0;
-//	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi2, 1, 4, 8);
-//	Snake s(lm, 8, 31, 7);
-//
-//	int delayBetweenSteps = 1000;
-//
-//	s.moveLeft();
-//	delayMs(delayBetweenSteps);
-//	s.moveBottom();
-//	delayMs(delayBetweenSteps);
-//	s.moveLeft();
-//	delayMs(delayBetweenSteps);
-//	s.moveBottom();
-//	delayMs(delayBetweenSteps);
-//	for (int i = 0; i < 15; ++i)
-//	{
-//		s.moveLeft();
-//		delayMs(delayBetweenSteps);
-//	}
-//
-//	for (int i = 0; i < 3; ++i)
-//	{
-//		s.moveTop();
-//		delayMs(delayBetweenSteps);
-//	}
-//
-//	for (int i = 0; i < 17; ++i)
-//	{
-//		s.moveRight();
-//		delayMs(delayBetweenSteps);
-//	}
-//
-//	for (int i = 0; i < 3; ++i)
-//	{
-//		s.moveBottom();
-//		delayMs(delayBetweenSteps);
-//	}
+	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8, false, false);
+
+	// init
+	uint8_t brightness = 7;
+	spi2.sendByte(0x88|(brightness & 0x07));
+
+	spi2.sendByte(0x40); // ������������� ������
+	uint8_t zeros[17]{0xC0};
+	spi2.sendData(zeros, 17); // ��������� �����
+
+	spi2.sendByte(0x44); // ������ �� ��������������� ������
+	for(int start = 0;start < 8; start ++)
+	{
+		spi2.sendData(0xC1+start*2, 1&0x01);
+	}
+	delayMs(100);
+	for(int start = 0;start < 8; start ++)
+	{
+		spi2.sendData(0xC1+start*2, 0&0x01);
+	}
+	delayMs(100);
+	for(int start = 0;start < 8; start ++)
+	{
+		spi2.sendData(0xC0+start*2, sym_mas[start]);
+	}
+	delayMs(100);
+		int testCounter = 1;
+		while(testCounter--)
+		{
+			stringTest(spi1);
+		}
+
+	while(1){
+		uint8_t keys = 0, key_mas[4];
+			spi2.readData(0x42, key_mas, 4);
+			keys = (key_mas[3]&0x11) << 3 | (key_mas[2]&0x11) << 2 | (key_mas[1]&0x11) << 1 | (key_mas[0]&0x11);
+			for(int start = 0;start < 8; start ++)
+			{
+				spi2.sendData(0xC1+start*2, keys&0x01);
+				keys >>= 1;
+			}
+			delayMs(1000);
+	}
+	//	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
+	//
+	//	return 0;
+	//	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi2, 1, 4, 8);
+	//	Snake s(lm, 8, 31, 7);
+	//
+	//	int delayBetweenSteps = 1000;
+	//
+	//	s.moveLeft();
+	//	delayMs(delayBetweenSteps);
+	//	s.moveBottom();
+	//	delayMs(delayBetweenSteps);
+	//	s.moveLeft();
+	//	delayMs(delayBetweenSteps);
+	//	s.moveBottom();
+	//	delayMs(delayBetweenSteps);
+	//	for (int i = 0; i < 15; ++i)
+	//	{
+	//		s.moveLeft();
+	//		delayMs(delayBetweenSteps);
+	//	}
+	//
+	//	for (int i = 0; i < 3; ++i)
+	//	{
+	//		s.moveTop();
+	//		delayMs(delayBetweenSteps);
+	//	}
+	//
+	//	for (int i = 0; i < 17; ++i)
+	//	{
+	//		s.moveRight();
+	//		delayMs(delayBetweenSteps);
+	//	}
+	//
+	//	for (int i = 0; i < 3; ++i)
+	//	{
+	//		s.moveBottom();
+	//		delayMs(delayBetweenSteps);
+	//	}
 	//singleLedTest(spi1);
 	//stringTest(spi1);
 	//lm.init();
@@ -462,15 +523,5 @@ int main(void)
 	//		delayMs(10);
 	//	}
 
-	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8, true, true);
-	Display7segmentMax7219<Controller::f103> display2(&spi1);
-	display2.init(7, 8);
-	display2.print(-82212);
 
-	for(int i = 1;i <= 100;++i)
-	{
-		display2.clean();
-		display2.print(i);
-		delayMs(100);
-	}
 }
