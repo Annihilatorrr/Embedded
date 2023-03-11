@@ -33,6 +33,8 @@ private:
 	PortPinPair m_mosi;
 	SPI_TypeDef* m_spi;
 	Spi<Controller::f103>::SpiFrameSize m_frameSize;
+	bool m_msbFirst;
+	bool m_fullDuplex;
 
 	void spiXInit(uint8_t spiIndex, PortPinPair cs, PortPinPair clock, PortPinPair miso, PortPinPair mosi, SpiFrameSize frameSize)
 	{
@@ -90,7 +92,8 @@ private:
 
 		m_spi->CR1   &= ~SPI_CR1_SPE; // disable SPI before configuring
 		m_spi->CR1 = (frameSize == SpiFrameSize::Bit8 ? (0 << SPI_CR1_DFF_Pos):SPI_CR1_DFF)    // 8 bit Data frame format
-				| 0 << SPI_CR1_LSBFIRST_Pos //  MSB transferred first
+				| (m_msbFirst ? 0 << SPI_CR1_LSBFIRST_Pos:SPI_CR1_LSBFIRST)//  MSB transferred first
+				| (m_fullDuplex ? 0 << SPI_CR1_BIDIMODE_Pos:SPI_CR1_BIDIMODE)
 				| SPI_CR1_SSM               //Software SS
 				| SPI_CR1_SSI               // NSS (CS) pin is high
 				| SPI_CR1_BR_0 | SPI_CR1_BR_1  //Baud: F_PCLK/16
@@ -116,14 +119,14 @@ private:
 		RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 	}
 
-	void initSpi1(Spi<Controller::f103>::SpiFrameSize frameSize)
+	void initSpi1(Spi<Controller::f103>::SpiFrameSize frameSize, bool msbFirst)
 	{
 		initAltFunctionsClock();
 		initPortAClock();
 		spiXInit(1, PortPinPair{GPIOA, 4}, PortPinPair{GPIOA, 5}, PortPinPair{GPIOA,6}, PortPinPair{GPIOA,7}, frameSize);
 	}
 
-	void initSpi2(Spi<Controller::f103>::SpiFrameSize frameSize)
+	void initSpi2(Spi<Controller::f103>::SpiFrameSize frameSize, bool msbFirst)
 	{
 		initAltFunctionsClock();
 		initPortBClock();
@@ -131,16 +134,18 @@ private:
 	}
 public:
 
-	Spi(Spi<Controller::f103>::SpiNumber spiNumber, Spi<Controller::f103>::SpiFrameSize frameSize):
+	Spi(Spi<Controller::f103>::SpiNumber spiNumber, Spi<Controller::f103>::SpiFrameSize frameSize, bool msbFirst, bool fullDuplex):
 		m_frameSize(frameSize)
+	    , m_msbFirst(msbFirst)
+		, m_fullDuplex(fullDuplex)
 	{
 		switch(spiNumber)
 		{
 		case Spi1:
-			initSpi1(frameSize);
+			initSpi1(frameSize, msbFirst);
 			break;
 		case Spi2:
-			initSpi2(frameSize);
+			initSpi2(frameSize, msbFirst);
 			break;
 		}
 	}

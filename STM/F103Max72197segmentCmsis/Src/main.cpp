@@ -152,7 +152,7 @@ int clockInit(void)
 //}
 void initSwdOnlyDebugging()
 {
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+	//RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 	AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // JTAG is disabled
 }
 //
@@ -336,50 +336,50 @@ int main(void)
 	SysTick_Init(72000000);
 	initSwdOnlyDebugging();
 
-	SpiF103 spi1(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
-
-	int testCounter = 10;
-	while(testCounter--)
-	{
-		stringTest(spi1);
-	}
-	return 0;
-	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi1, 1, 4, 8);
-	Snake s(lm, 8, 31, 7);
-
-	int delayBetweenSteps = 1000;
-
-	s.moveLeft();
-	delayMs(delayBetweenSteps);
-	s.moveBottom();
-	delayMs(delayBetweenSteps);
-	s.moveLeft();
-	delayMs(delayBetweenSteps);
-	s.moveBottom();
-	delayMs(delayBetweenSteps);
-	for (int i = 0; i < 15; ++i)
-	{
-		s.moveLeft();
-		delayMs(delayBetweenSteps);
-	}
-
-	for (int i = 0; i < 3; ++i)
-	{
-		s.moveTop();
-		delayMs(delayBetweenSteps);
-	}
-
-	for (int i = 0; i < 17; ++i)
-	{
-		s.moveRight();
-		delayMs(delayBetweenSteps);
-	}
-
-	for (int i = 0; i < 3; ++i)
-	{
-		s.moveBottom();
-		delayMs(delayBetweenSteps);
-	}
+//	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit8);
+//
+//	int testCounter = 10;
+//	while(testCounter--)
+//	{
+//		stringTest(spi2);
+//	}
+//	return 0;
+//	LedMatrixMax7219<Controller::f103, 8, 4> lm(&spi2, 1, 4, 8);
+//	Snake s(lm, 8, 31, 7);
+//
+//	int delayBetweenSteps = 1000;
+//
+//	s.moveLeft();
+//	delayMs(delayBetweenSteps);
+//	s.moveBottom();
+//	delayMs(delayBetweenSteps);
+//	s.moveLeft();
+//	delayMs(delayBetweenSteps);
+//	s.moveBottom();
+//	delayMs(delayBetweenSteps);
+//	for (int i = 0; i < 15; ++i)
+//	{
+//		s.moveLeft();
+//		delayMs(delayBetweenSteps);
+//	}
+//
+//	for (int i = 0; i < 3; ++i)
+//	{
+//		s.moveTop();
+//		delayMs(delayBetweenSteps);
+//	}
+//
+//	for (int i = 0; i < 17; ++i)
+//	{
+//		s.moveRight();
+//		delayMs(delayBetweenSteps);
+//	}
+//
+//	for (int i = 0; i < 3; ++i)
+//	{
+//		s.moveBottom();
+//		delayMs(delayBetweenSteps);
+//	}
 	//singleLedTest(spi1);
 	//stringTest(spi1);
 	//lm.init();
@@ -462,15 +462,15 @@ int main(void)
 	//		delayMs(10);
 	//	}
 
-	SpiF103 spi2(SpiF103::Spi2, SpiF103::SpiFrameSize::Bit16);
-	Display7segmentMax7219<Controller::f103> display2(&spi2);
-	display2.init(15, 8);
+	SpiF103 spi1(SpiF103::Spi1, SpiF103::SpiFrameSize::Bit8, true, true);
+	Display7segmentMax7219<Controller::f103> display2(&spi1);
+	display2.init(7, 8);
 	display2.print(-82212);
 
 	for(int i = 1;i <= 100;++i)
 	{
 		display2.clean();
 		display2.print(i);
-		delayMs(500);
+		delayMs(100);
 	}
 }
